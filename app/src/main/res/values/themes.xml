@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.CanvasExperimentation" parent="android:Theme.Material.Light.NoActionBar" >
+        <item name="android:statusBarColor">#6CBBDB</item>
+        <item name="android:navigationBarColor">#6CBBDB</item>
+    </style>
+</resources>
