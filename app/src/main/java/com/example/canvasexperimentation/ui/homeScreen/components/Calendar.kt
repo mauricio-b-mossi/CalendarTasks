@@ -2,10 +2,7 @@ package com.example.canvasexperimentation.ui.homeScreen.components
 
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,15 +11,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextMeasurer
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.Dp
-import com.example.canvasexperimentation.ui.theme.activeDate
-import com.example.canvasexperimentation.ui.theme.inactiveDate
-import com.example.canvasexperimentation.ui.theme.selectedDate
 import java.time.LocalDate
 
 @OptIn(ExperimentalTextApi::class)
@@ -62,3 +54,4 @@ fun CalendarPagination(date: LocalDate, onDateSelect: (LocalDate) -> Unit, calen
         }
     }
 }
+

@@ -117,27 +117,29 @@ fun DrawScope.drawDaysOfWeek(
 
 @OptIn(ExperimentalTextApi::class)
 fun DrawScope.drawDaysOfMonth(
-    month: Month,
-    dayOfMonth: Int,
-    isLeapYear: Boolean,
-    firstDayOfWeekOfMonth: DayOfWeek,
+    selectedDate : LocalDate,
+    date : LocalDate,
+    //month: Month,
+    //dayOfMonth: Int,
+    //isLeapYear: Boolean,
+    //firstDayOfWeekOfMonth: DayOfWeek,
     width: Float,
     offset: Float,
     textMeasurer: TextMeasurer,
     activeColor: Color,
     selectedColor: Color,
 ) {
-    val dateOffset = firstDayOfWeekOfMonth.ordinal
+    val dateOffset = date.dayOfWeek.ordinal
 
     var row: Byte = 1;
-    for (i in 1..month.getDaysInMonth(isLeapYear)) {
+    for (i in 1..date.month.getDaysInMonth(date.isLeapYear)) {
         val text = i.toString()
         val textSize = textMeasurer.measure(AnnotatedString(text)).size
-        if (i == dayOfMonth) {
+        if (selectedDate.equals(date)) {
             val col =
-                if ((dayOfMonth + dateOffset) % 7 == 0) 7 else ((((dayOfMonth + dateOffset) - 1) % 7) + 1)
+                if ((date.dayOfMonth + dateOffset) % 7 == 0) 7 else ((((date.dayOfMonth + dateOffset) - 1) % 7) + 1)
             val row =
-                if ((dayOfMonth + dateOffset) % 7 == 0) ((dayOfMonth + dateOffset) / 7) else ((dayOfMonth + dateOffset) / 7) + 1
+                if ((date.dayOfMonth + dateOffset) % 7 == 0) ((date.dayOfMonth + dateOffset) / 7) else ((date.dayOfMonth + dateOffset) / 7) + 1
             drawCircle(
                 selectedColor,
                 width / 3,

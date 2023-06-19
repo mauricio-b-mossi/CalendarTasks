@@ -4,7 +4,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -12,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -20,15 +20,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
-import com.example.canvasexperimentation.ui.homeScreen.HomeScreen
-import com.example.canvasexperimentation.ui.homeScreen.components.Calendar
 import com.example.canvasexperimentation.ui.homeScreen.components.Month
-import com.example.canvasexperimentation.ui.theme.activeDate
-import com.example.canvasexperimentation.ui.theme.calendarBackground
-import com.example.canvasexperimentation.ui.theme.inactiveDate
-import com.example.canvasexperimentation.ui.theme.selectedDate
+import com.example.canvasexperimentation.ui.theme.activeColor
+import com.example.canvasexperimentation.ui.theme.calendarBackgroundColor
+import com.example.canvasexperimentation.ui.theme.inactiveColor
+import com.example.canvasexperimentation.ui.theme.selectedColor
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
@@ -37,44 +36,57 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val textMeasurer = rememberTextMeasurer()
-            var localDate by remember {
+            var selectedDate by remember {
                 mutableStateOf(LocalDate.now())
             }
             var offset by remember {
                 mutableStateOf(0f)
             }
             Column(
-                Modifier
-                    .background(calendarBackground)
+                Modifier.background(calendarBackgroundColor)
             ) {
-                BoxWithConstraints(modifier = Modifier.pointerInput(true) {
-                    detectHorizontalDragGestures { _, dragAmount ->
-                        offset += dragAmount
-                    }
+                Calendar(
+                    date = selectedDate,
+                    onDateChange = {selectedDate = it},
+                    offset = {offset},
+                    onOffsetChange = {offset += it}
+                )
+            }
+        }
+    }
+}
+@OptIn(ExperimentalTextApi::class)
+@Composable
+fun Calendar(
+    date: LocalDate,
+    onDateChange: (LocalDate) -> Unit,
+    offset: () -> Float,
+    onOffsetChange: (Float) -> Unit,
+    textMeasurer: TextMeasurer = rememberTextMeasurer()
+) {
+    BoxWithConstraints(modifier = Modifier.pointerInput(true) {
+        detectHorizontalDragGestures { _, dragAmount ->
+            onOffsetChange(dragAmount)
+        }
+    }) {
+        val maxWidth = maxWidth
+        Row(
+            Modifier
+                .requiredWidth(maxWidth * 3)
+                .graphicsLayer {
+                    translationX = offset()
                 }) {
-                    val maxWidth = maxWidth
-                    Row(
-                        Modifier
-                            .requiredWidth(maxWidth * 3)
-                            .graphicsLayer {
-                                translationX = offset
-                            }) {
-                        Month(
-                            date = localDate.minusMonths(1),
-                            onDateSelect = { localDate = it },
-                            modifier = Modifier.widthIn(max = maxWidth)
-                        )
-                        Month(
-                            date = localDate,
-                            onDateSelect = { localDate = it },
-                            modifier = Modifier.widthIn(max = maxWidth)
-                        )
-                        Month(
-                            date = localDate.plusMonths(1),
-                            onDateSelect = { localDate = it },
-                            modifier = Modifier.widthIn(max = maxWidth)
-                        )
-                    }
+            repeat(3) {
+                Column(Modifier.padding(horizontal = 16.dp)) {
+                    Month(
+                        date = date.minusMonths((1 - it).toLong()),
+                        onDateSelect = {onDateChange(it)},
+                        modifier = Modifier.widthIn(max = maxWidth - 32.dp),
+                        activeColor = activeColor,
+                        inactiveColor = inactiveColor,
+                        selectedColor = selectedColor,
+                        textMeasurer = textMeasurer
+                    )
                 }
             }
         }

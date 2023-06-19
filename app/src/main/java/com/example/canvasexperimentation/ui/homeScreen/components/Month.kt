@@ -6,7 +6,6 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,9 +18,6 @@ import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.canvasexperimentation.ui.homeScreen.extensions.drawDaysOfMonth
 import com.example.canvasexperimentation.ui.homeScreen.extensions.drawTitleAndLabels
-import com.example.canvasexperimentation.ui.theme.activeDate
-import com.example.canvasexperimentation.ui.theme.inactiveDate
-import com.example.canvasexperimentation.ui.theme.selectedDate
 import com.example.canvasexperimentation.utils.getDaysInMonth
 import com.example.canvasexperimentation.utils.getFirstDayOfWeekOfMonth
 import java.time.LocalDate
@@ -30,11 +26,12 @@ import kotlin.math.ceil
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun Month(
+    selectedDate: LocalDate,
     date: LocalDate,
     onDateSelect: (LocalDate) -> Unit,
-    activeColor: Color = activeDate,
-    inactiveColor: Color = inactiveDate,
-    selectedColor: Color = selectedDate,
+    activeColor: Color = com.example.canvasexperimentation.ui.theme.activeColor,
+    inactiveColor: Color = com.example.canvasexperimentation.ui.theme.inactiveColor,
+    selectedColor: Color = com.example.canvasexperimentation.ui.theme.selectedColor,
     textMeasurer: TextMeasurer = rememberTextMeasurer(),
     modifier: Modifier = Modifier
 ) {
@@ -64,6 +61,7 @@ fun Month(
                 modifier.fillMaxSize()
             ) {
                 drawTitleAndLabels(
+                    selectedDate =selectedDate,
                     month = date.month,
                     year = date.year,
                     textMeasurer = textMeasurer,
@@ -73,6 +71,7 @@ fun Month(
                     activeDay = date.dayOfWeek
                 )
                 drawDaysOfMonth(
+                    selectedDate = selectedDate,
                     month = date.month,
                     dayOfMonth = date.dayOfMonth,
                     isLeapYear = date.isLeapYear,
@@ -80,7 +79,7 @@ fun Month(
                     width = width,
                     offset = offset,
                     textMeasurer = textMeasurer,
-                    activeColor = activeDate,
+                    activeColor = com.example.canvasexperimentation.ui.theme.activeColor,
                     selectedColor = selectedColor
                 )
             }
@@ -101,6 +100,6 @@ fun getDateFromPosition(row: Int, col: Int, date: LocalDate): Int {
 @Composable
 fun MonthPreview() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Month(date = LocalDate.now().plusMonths(0), onDateSelect = { Unit })
+        Month(selectedDate = LocalDate.now(), date = LocalDate.now().plusMonths(0), onDateSelect = { Unit })
     }
 }
