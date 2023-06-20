@@ -1,6 +1,7 @@
 package com.example.canvasexperimentation
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -8,10 +9,15 @@ import androidx.compose.foundation.gestures.detectHorizontalDragGestures
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,6 +29,7 @@ import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
+import com.example.canvasexperimentation.ui.homeScreen.components.Calendar
 import com.example.canvasexperimentation.ui.homeScreen.components.Month
 import com.example.canvasexperimentation.ui.theme.activeColor
 import com.example.canvasexperimentation.ui.theme.calendarBackgroundColor
@@ -36,57 +43,29 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val textMeasurer = rememberTextMeasurer()
-            var selectedDate by remember {
+            var date by remember {
                 mutableStateOf(LocalDate.now())
             }
-            var offset by remember {
-                mutableStateOf(0f)
-            }
-            Column(
-                Modifier.background(calendarBackgroundColor)
-            ) {
-                Calendar(
-                    date = selectedDate,
-                    onDateChange = {selectedDate = it},
-                    offset = {offset},
-                    onOffsetChange = {offset += it}
-                )
-            }
-        }
-    }
-}
-@OptIn(ExperimentalTextApi::class)
-@Composable
-fun Calendar(
-    date: LocalDate,
-    onDateChange: (LocalDate) -> Unit,
-    offset: () -> Float,
-    onOffsetChange: (Float) -> Unit,
-    textMeasurer: TextMeasurer = rememberTextMeasurer()
-) {
-    BoxWithConstraints(modifier = Modifier.pointerInput(true) {
-        detectHorizontalDragGestures { _, dragAmount ->
-            onOffsetChange(dragAmount)
-        }
-    }) {
-        val maxWidth = maxWidth
-        Row(
-            Modifier
-                .requiredWidth(maxWidth * 3)
-                .graphicsLayer {
-                    translationX = offset()
-                }) {
-            repeat(3) {
-                Column(Modifier.padding(horizontal = 16.dp)) {
-                    Month(
-                        date = date.minusMonths((1 - it).toLong()),
-                        onDateSelect = {onDateChange(it)},
-                        modifier = Modifier.widthIn(max = maxWidth - 32.dp),
-                        activeColor = activeColor,
-                        inactiveColor = inactiveColor,
-                        selectedColor = selectedColor,
-                        textMeasurer = textMeasurer
-                    )
+
+            LazyColumn() {
+                items(12) {
+                    BoxWithConstraints {
+                        val padding = 16.dp
+                        val size = maxWidth - padding
+                        Column(
+                            Modifier
+                                .fillMaxWidth()
+                                .background(calendarBackgroundColor)
+                                .padding(padding)
+                        ) {
+                            Month(
+                                date = date,
+                                onDateSelect = { localDate -> date = localDate },
+                                textMeasurer = textMeasurer,
+                                modifier = Modifier.size(size, size)
+                            )
+                        }
+                    }
                 }
             }
         }

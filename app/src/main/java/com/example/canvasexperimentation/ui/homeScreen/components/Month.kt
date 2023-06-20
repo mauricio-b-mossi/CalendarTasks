@@ -21,6 +21,8 @@ import com.example.canvasexperimentation.ui.homeScreen.extensions.drawTitleAndLa
 import com.example.canvasexperimentation.utils.getDaysInMonth
 import com.example.canvasexperimentation.utils.getFirstDayOfWeekOfMonth
 import java.time.LocalDate
+import java.time.Month
+import java.time.Year
 import kotlin.math.ceil
 
 @OptIn(ExperimentalTextApi::class)
@@ -47,11 +49,9 @@ fun Month(
                 if (touch.y > offset) {
                     val row = ceil(touch.y / width - 2).toInt()
                     val col = ceil(touch.x / width).toInt()
-                    Log.d("Event", "Row: $row, Col: $col")
+                    Log.d("Recomp", "Click from ${date.month}")
                     val dayOfMonth = getDateFromPosition(row, col, date)
-                    Log.d("Event", dayOfMonth.toString())
                     if (dayOfMonth != 0) {
-                        Log.d("Event", "Sending")
                         onDateSelect(LocalDate.of(date.year, date.month, dayOfMonth))
                     }
                 }
@@ -107,7 +107,6 @@ fun Month(
                     val col = ceil(touch.x / width).toInt()
                     Log.d("Event", "Row: $row, Col: $col")
                     val dayOfMonth = getDateFromPosition(row, col, date)
-                    Log.d("Event", dayOfMonth.toString())
                     if (dayOfMonth != 0) {
                         Log.d("Event", "Sending")
                         onDateSelect(LocalDate.of(date.year, date.month, dayOfMonth))
@@ -135,7 +134,70 @@ fun Month(
                     width = width,
                     offset = offset,
                     textMeasurer = textMeasurer,
-                    activeColor = activeDate,
+                    activeColor = activeColor,
+                    selectedColor = selectedColor
+                )
+            }
+        }
+    }
+}
+
+
+@OptIn(ExperimentalTextApi::class)
+@Composable
+fun Month(
+    date: LocalDate,
+    onDateSelect: (LocalDate) -> Unit,
+    month: Month,
+    year: Int,
+    activeColor: Color = com.example.canvasexperimentation.ui.theme.activeColor,
+    inactiveColor: Color = com.example.canvasexperimentation.ui.theme.inactiveColor,
+    selectedColor: Color = com.example.canvasexperimentation.ui.theme.selectedColor,
+    textMeasurer: TextMeasurer = rememberTextMeasurer(),
+    modifier: Modifier = Modifier
+) {
+    val density = LocalDensity.current
+
+    BoxWithConstraints(modifier) {
+
+        val width = with(density) { (maxWidth / 7).toPx() }
+        val offset = 2 * width
+
+        Box(Modifier.pointerInput(true) {
+            detectTapGestures { touch ->
+                if (touch.y > offset) {
+                    val row = ceil(touch.y / width - 2).toInt()
+                    val col = ceil(touch.x / width).toInt()
+                    Log.d("Event", "Row: $row, Col: $col")
+                    val dayOfMonth = getDateFromPosition(row, col, month, year)
+                    if (dayOfMonth != 0) {
+                        Log.d("Event", "Sending")
+                        onDateSelect(LocalDate.of(date.year, date.month, dayOfMonth))
+                    }
+                }
+            }
+        }) {
+            Canvas(
+                modifier.fillMaxSize()
+            ) {
+                drawTitleAndLabels(
+                    month = month,
+                    year = year,
+                    textMeasurer = textMeasurer,
+                    width = width,
+                    activeColor = activeColor,
+                    inactiveColor = inactiveColor,
+                    // TODO maybe add date instead of activeDay
+                    activeDay = date.dayOfWeek
+                )
+                drawDaysOfMonth(
+                    containsSelectedDate = false,
+                    dayOfMonth = month.getDaysInMonth(year),
+                    firstDayOfWeekOfMonth = month.getFirstDayOfWeekOfMonth(year),
+                    width = width,
+                    offset = offset,
+                    textMeasurer = textMeasurer,
+                    activeColor = activeColor,
                     selectedColor = selectedColor
                 )
             }
@@ -150,6 +212,16 @@ fun getDateFromPosition(row: Int, col: Int, date: LocalDate): Int {
     val dayOfMonth = (row - 1) * 7 + col - dateOffset.ordinal
     return if (dayOfMonth in 1..daysInMonth) dayOfMonth else 0
 }
+
+fun getDateFromPosition(row: Int, col: Int, month: Month, year: Int): Int {
+    val date = LocalDate.of(year, month, 1)
+    val dateOffset = date.dayOfWeek
+    val daysInMonth = date.getDaysInMonth()
+    val dayOfMonth = (row - 1) * 7 + col - dateOffset.ordinal
+    return if (dayOfMonth in 1..daysInMonth) dayOfMonth else 0
+}
+
+fun getDays
 
 @OptIn(ExperimentalTextApi::class)
 @Preview

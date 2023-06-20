@@ -1,5 +1,6 @@
 package com.example.canvasexperimentation.ui.homeScreen.extensions
 
+import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -12,6 +13,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import com.example.canvasexperimentation.utils.getDaysInMonth
+import com.example.canvasexperimentation.utils.getFirstDayOfWeekOfMonth
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month
@@ -38,7 +40,7 @@ fun DrawScope.drawTitleAndLabels(
                 width * day.value - width / 2 - textSize.width / 2,
                 width / 2 - textSize.height / 2 + width
             ),
-            style = if (selectedDate.equals(date) && day.value == selectedDate.dayOfWeek.value) TextStyle.Default.copy(
+            style = if (selectedDate.month == date.month && selectedDate.year == date.year && selectedDate.dayOfWeek == day) TextStyle.Default.copy(
                 color = activeColor,
                 fontWeight = FontWeight.SemiBold
             ) else TextStyle.Default.copy(
@@ -61,6 +63,7 @@ fun DrawScope.drawTitleAndLabels(
         )
     )
 }
+
 @OptIn(ExperimentalTextApi::class)
 fun DrawScope.drawTitleAndLabels(
     month: Month,
@@ -169,17 +172,18 @@ fun DrawScope.drawDaysOfMonth(
     activeColor: Color,
     selectedColor: Color,
 ) {
-    val dateOffset = date.dayOfWeek.ordinal
+    val dateOffset = date.getFirstDayOfWeekOfMonth().ordinal
+
 
     var row: Byte = 1;
     for (i in 1..date.month.getDaysInMonth(date.isLeapYear)) {
         val text = i.toString()
         val textSize = textMeasurer.measure(AnnotatedString(text)).size
-        if (selectedDate.equals(date)) {
+        if (i == selectedDate.dayOfMonth && selectedDate.month == date.month && selectedDate.year == date.year) {
             val col =
-                if ((date.dayOfMonth + dateOffset) % 7 == 0) 7 else ((((date.dayOfMonth + dateOffset) - 1) % 7) + 1)
+                if ((selectedDate.dayOfMonth + dateOffset) % 7 == 0) 7 else ((((selectedDate.dayOfMonth + dateOffset) - 1) % 7) + 1)
             val row =
-                if ((date.dayOfMonth + dateOffset) % 7 == 0) ((date.dayOfMonth + dateOffset) / 7) else ((date.dayOfMonth + dateOffset) / 7) + 1
+                if ((selectedDate.dayOfMonth + dateOffset) % 7 == 0) ((selectedDate.dayOfMonth + dateOffset) / 7) else ((selectedDate.dayOfMonth + dateOffset) / 7) + 1
             drawCircle(
                 selectedColor,
                 width / 3,
@@ -205,9 +209,8 @@ fun DrawScope.drawDaysOfMonth(
 
 @OptIn(ExperimentalTextApi::class)
 fun DrawScope.drawDaysOfMonth(
-    month: Month,
+    containsSelectedDate : Boolean,
     dayOfMonth: Int,
-    isLeapYear: Boolean,
     firstDayOfWeekOfMonth: DayOfWeek,
     width: Float,
     offset: Float,
@@ -218,10 +221,10 @@ fun DrawScope.drawDaysOfMonth(
     val dateOffset = firstDayOfWeekOfMonth.ordinal
 
     var row: Byte = 1;
-    for (i in 1..month.getDaysInMonth(isLeapYear)) {
+    for (i in 1..dayOfMonth) {
         val text = i.toString()
         val textSize = textMeasurer.measure(AnnotatedString(text)).size
-        if (i == dayOfMonth) {
+        if (containsSelectedDate && i == dayOfMonth) {
             val col =
                 if ((dayOfMonth + dateOffset) % 7 == 0) 7 else ((((dayOfMonth + dateOffset) - 1) % 7) + 1)
             val row =
