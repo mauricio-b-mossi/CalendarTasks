@@ -61,7 +61,7 @@ fun Month(
                 modifier.fillMaxSize()
             ) {
                 drawTitleAndLabels(
-                    selectedDate =selectedDate,
+                    selectedDate = selectedDate,
                     month = date.month,
                     year = date.year,
                     textMeasurer = textMeasurer,
@@ -100,6 +100,9 @@ fun getDateFromPosition(row: Int, col: Int, date: LocalDate): Int {
 @Composable
 fun MonthPreview() {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Month(selectedDate = LocalDate.now(), date = LocalDate.now().plusMonths(0), onDateSelect = { Unit })
+        Month(
+            selectedDate = LocalDate.now(),
+            date = LocalDate.now().plusMonths(0),
+            onDateSelect = { Unit })
     }
 }
