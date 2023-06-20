@@ -1,4 +1,4 @@
-package com.example.canvasexperimentation.utils
+package com.example.canvasexperimentation.utils.extensions
 
 fun Int.isLeapYear(): Boolean {
     return if (this % 4 == 0 && this % 400 == 0) {

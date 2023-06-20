@@ -58,11 +58,22 @@ class MainActivity : ComponentActivity() {
                                 .background(calendarBackgroundColor)
                                 .padding(padding)
                         ) {
+                            // WARNING Does not work
+                            //Month(
+                                //date = date,
+                                //onDateSelect = { localDate -> date = localDate },
+                                //month = date.month.plus(it.toLong()),
+                                //year = date.year.plus(it / 12),
+                                //textMeasurer = textMeasurer,
+                                //modifier = Modifier.size(size)
+                            //)
+
+                            // Does work
                             Month(
                                 date = date,
                                 onDateSelect = { localDate -> date = localDate },
                                 textMeasurer = textMeasurer,
-                                modifier = Modifier.size(size, size)
+                                modifier = Modifier.size(size)
                             )
                         }
                     }

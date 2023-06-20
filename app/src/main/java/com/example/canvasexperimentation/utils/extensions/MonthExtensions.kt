@@ -1,5 +1,6 @@
-package com.example.canvasexperimentation.utils
+package com.example.canvasexperimentation.utils.extensions
 
+import com.example.canvasexperimentation.utils.extensions.isLeapYear
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month

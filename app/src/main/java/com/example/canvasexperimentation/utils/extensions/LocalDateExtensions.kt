@@ -1,4 +1,4 @@
-package com.example.canvasexperimentation.utils
+package com.example.canvasexperimentation.utils.extensions
 
 import java.time.DayOfWeek
 import java.time.LocalDate
@@ -14,8 +14,8 @@ fun LocalDate.getFirstDayOfWeekOfMonth(): DayOfWeek {
 /**
  * Returns the number of days in the current month.
  */
-fun LocalDate.getDaysInMonth() : Int{
-    return when(this.month){
+fun LocalDate.getDaysInMonth(): Int {
+    return when (this.month) {
         Month.JANUARY -> 31
         Month.FEBRUARY -> if (isLeapYear) 29 else 28
         Month.MARCH -> 31
@@ -30,3 +30,5 @@ fun LocalDate.getDaysInMonth() : Int{
         Month.DECEMBER -> 31
     }
 }
+
+fun LocalDate.withIn(month: Month, year: Int): Boolean = this.month == month && this.year == year

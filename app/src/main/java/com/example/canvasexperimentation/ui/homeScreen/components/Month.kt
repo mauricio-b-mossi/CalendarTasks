@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.pointerInput
@@ -15,14 +14,13 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.rememberTextMeasurer
-import androidx.compose.ui.tooling.preview.Preview
-import com.example.canvasexperimentation.ui.homeScreen.extensions.drawDaysOfMonth
-import com.example.canvasexperimentation.ui.homeScreen.extensions.drawTitleAndLabels
-import com.example.canvasexperimentation.utils.getDaysInMonth
-import com.example.canvasexperimentation.utils.getFirstDayOfWeekOfMonth
+import com.example.canvasexperimentation.ui.homeScreen.extensions.drawScope.drawDaysOfMonth
+import com.example.canvasexperimentation.ui.homeScreen.extensions.drawScope.drawTitleAndLabels
+import com.example.canvasexperimentation.utils.extensions.getDaysInMonth
+import com.example.canvasexperimentation.utils.extensions.getFirstDayOfWeekOfMonth
+import com.example.canvasexperimentation.utils.extensions.withIn
 import java.time.LocalDate
 import java.time.Month
-import java.time.Year
 import kotlin.math.ceil
 
 @OptIn(ExperimentalTextApi::class)
@@ -82,6 +80,7 @@ fun Month(
     }
 }
 
+// Does work
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun Month(
@@ -143,6 +142,7 @@ fun Month(
 }
 
 
+// WARNING Does not work
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun Month(
@@ -163,6 +163,7 @@ fun Month(
         val width = with(density) { (maxWidth / 7).toPx() }
         val offset = 2 * width
 
+        // Extract Box to other side
         Box(Modifier.pointerInput(true) {
             detectTapGestures { touch ->
                 if (touch.y > offset) {
@@ -181,6 +182,7 @@ fun Month(
                 modifier.fillMaxSize()
             ) {
                 drawTitleAndLabels(
+                    containsSelectedDate = date.withIn(month, year),
                     month = month,
                     year = year,
                     textMeasurer = textMeasurer,
@@ -191,7 +193,7 @@ fun Month(
                     activeDay = date.dayOfWeek
                 )
                 drawDaysOfMonth(
-                    containsSelectedDate = false,
+                    containsSelectedDate = date.withIn(month, year),
                     dayOfMonth = month.getDaysInMonth(year),
                     firstDayOfWeekOfMonth = month.getFirstDayOfWeekOfMonth(year),
                     width = width,
@@ -219,17 +221,4 @@ fun getDateFromPosition(row: Int, col: Int, month: Month, year: Int): Int {
     val daysInMonth = date.getDaysInMonth()
     val dayOfMonth = (row - 1) * 7 + col - dateOffset.ordinal
     return if (dayOfMonth in 1..daysInMonth) dayOfMonth else 0
-}
-
-
-@OptIn(ExperimentalTextApi::class)
-@Preview
-@Composable
-fun MonthPreview() {
-    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-        Month(
-            selectedDate = LocalDate.now(),
-            date = LocalDate.now().plusMonths(0),
-            onDateSelect = { Unit })
-    }
 }
