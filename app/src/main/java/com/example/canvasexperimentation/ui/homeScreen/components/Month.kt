@@ -221,7 +221,6 @@ fun getDateFromPosition(row: Int, col: Int, month: Month, year: Int): Int {
     return if (dayOfMonth in 1..daysInMonth) dayOfMonth else 0
 }
 
-fun getDays
 
 @OptIn(ExperimentalTextApi::class)
 @Preview

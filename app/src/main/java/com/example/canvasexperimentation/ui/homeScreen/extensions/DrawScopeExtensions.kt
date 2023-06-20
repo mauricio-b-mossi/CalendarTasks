@@ -209,7 +209,53 @@ fun DrawScope.drawDaysOfMonth(
 
 @OptIn(ExperimentalTextApi::class)
 fun DrawScope.drawDaysOfMonth(
-    containsSelectedDate : Boolean,
+    month: Month,
+    dayOfMonth: Int,
+    isLeapYear: Boolean,
+    firstDayOfWeekOfMonth: DayOfWeek,
+    width: Float,
+    offset: Float,
+    textMeasurer: TextMeasurer,
+    activeColor: Color,
+    selectedColor: Color,
+) {
+    val dateOffset = firstDayOfWeekOfMonth.ordinal
+
+    var row: Byte = 1;
+    for (i in 1..month.getDaysInMonth(isLeapYear)) {
+        val text = i.toString()
+        val textSize = textMeasurer.measure(AnnotatedString(text)).size
+        if (i == dayOfMonth) {
+            val col =
+                if ((dayOfMonth + dateOffset) % 7 == 0) 7 else ((((dayOfMonth + dateOffset) - 1) % 7) + 1)
+            val row =
+                if ((dayOfMonth + dateOffset) % 7 == 0) ((dayOfMonth + dateOffset) / 7) else ((dayOfMonth + dateOffset) / 7) + 1
+            drawCircle(
+                selectedColor,
+                width / 3,
+                Offset(col * width - width / 2, row * width + offset - width / 2)
+            )
+        }
+        drawText(
+            textMeasurer,
+            text,
+            Offset(
+                width * (if ((i + dateOffset) % 7 == 0) 7 else (i + dateOffset) % 7) - width / 2 - textSize.width / 2,
+                row * width + offset - width / 2 - textSize.height / 2
+            ),
+            style = TextStyle.Default.copy(
+                color = activeColor,
+                fontWeight = FontWeight.SemiBold
+            )
+        )
+
+        if ((i + dateOffset) % 7 == 0) row++
+    }
+}
+
+@OptIn(ExperimentalTextApi::class)
+fun DrawScope.drawDaysOfMonth(
+    containsSelectedDate: Boolean,
     dayOfMonth: Int,
     firstDayOfWeekOfMonth: DayOfWeek,
     width: Float,
