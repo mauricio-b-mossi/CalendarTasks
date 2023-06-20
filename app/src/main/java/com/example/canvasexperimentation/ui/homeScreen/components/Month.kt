@@ -62,6 +62,63 @@ fun Month(
             ) {
                 drawTitleAndLabels(
                     selectedDate = selectedDate,
+                    date = date,
+                    textMeasurer = textMeasurer,
+                    width = width,
+                    activeColor = activeColor,
+                    inactiveColor = inactiveColor,
+                )
+                drawDaysOfMonth(
+                    selectedDate = selectedDate,
+                    date = date,
+                    width = width,
+                    offset = offset,
+                    textMeasurer = textMeasurer,
+                    activeColor = com.example.canvasexperimentation.ui.theme.activeColor,
+                    selectedColor = selectedColor
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalTextApi::class)
+@Composable
+fun Month(
+    date: LocalDate,
+    onDateSelect: (LocalDate) -> Unit,
+    activeColor: Color = com.example.canvasexperimentation.ui.theme.activeColor,
+    inactiveColor: Color = com.example.canvasexperimentation.ui.theme.inactiveColor,
+    selectedColor: Color = com.example.canvasexperimentation.ui.theme.selectedColor,
+    textMeasurer: TextMeasurer = rememberTextMeasurer(),
+    modifier: Modifier = Modifier
+) {
+    val density = LocalDensity.current
+
+    BoxWithConstraints(modifier) {
+
+        val width = with(density) { (maxWidth / 7).toPx() }
+        val offset = 2 * width
+
+        Box(Modifier.pointerInput(true) {
+            detectTapGestures { touch ->
+                if (touch.y > offset) {
+                    val row = ceil(touch.y / width - 2).toInt()
+                    val col = ceil(touch.x / width).toInt()
+                    Log.d("Event", "Row: $row, Col: $col")
+                    val dayOfMonth = getDateFromPosition(row, col, date)
+                    Log.d("Event", dayOfMonth.toString())
+                    if (dayOfMonth != 0) {
+                        Log.d("Event", "Sending")
+                        onDateSelect(LocalDate.of(date.year, date.month, dayOfMonth))
+                    }
+                }
+            }
+        }) {
+            Canvas(
+                modifier.fillMaxSize()
+            ) {
+                drawTitleAndLabels(
                     month = date.month,
                     year = date.year,
                     textMeasurer = textMeasurer,
@@ -71,7 +128,6 @@ fun Month(
                     activeDay = date.dayOfWeek
                 )
                 drawDaysOfMonth(
-                    selectedDate = selectedDate,
                     month = date.month,
                     dayOfMonth = date.dayOfMonth,
                     isLeapYear = date.isLeapYear,
@@ -79,7 +135,7 @@ fun Month(
                     width = width,
                     offset = offset,
                     textMeasurer = textMeasurer,
-                    activeColor = com.example.canvasexperimentation.ui.theme.activeColor,
+                    activeColor = activeDate,
                     selectedColor = selectedColor
                 )
             }
