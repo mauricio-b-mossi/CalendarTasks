@@ -5,7 +5,14 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.foundation.layout.requiredWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -14,6 +21,8 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.rememberTextMeasurer
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import com.example.canvasexperimentation.ui.homeScreen.extensions.drawScope.drawDaysOfMonth
 import com.example.canvasexperimentation.ui.homeScreen.extensions.drawScope.drawTitleAndLabels
 import com.example.canvasexperimentation.utils.extensions.getDaysInMonth
@@ -80,7 +89,6 @@ fun Month(
     }
 }
 
-// Does work
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun Month(
@@ -142,7 +150,6 @@ fun Month(
 }
 
 
-// WARNING Does not work
 @OptIn(ExperimentalTextApi::class)
 @Composable
 fun Month(
@@ -162,6 +169,9 @@ fun Month(
 
         val width = with(density) { (maxWidth / 7).toPx() }
         val offset = 2 * width
+        val maxWidth = maxWidth
+        val rows =
+            (month.getDaysInMonth(year) + month.getFirstDayOfWeekOfMonth(year).value) / 2 + (offset / width)
 
         // Extract Box to other side
         Box(Modifier.pointerInput(true) {
@@ -172,14 +182,16 @@ fun Month(
                     Log.d("Event", "Row: $row, Col: $col")
                     val dayOfMonth = getDateFromPosition(row, col, month, year)
                     if (dayOfMonth != 0) {
-                        Log.d("Event", "Sending")
-                        onDateSelect(LocalDate.of(date.year, date.month, dayOfMonth))
+                        Log.d("Event", "Sending $dayOfMonth")
+                        onDateSelect(LocalDate.of(year, month, dayOfMonth))
                     }
                 }
             }
         }) {
             Canvas(
-                modifier.fillMaxSize()
+                Modifier
+                    .width(maxWidth)
+                    .height(maxWidth / 7 * rows)
             ) {
                 drawTitleAndLabels(
                     containsSelectedDate = date.withIn(month, year),
@@ -194,7 +206,8 @@ fun Month(
                 )
                 drawDaysOfMonth(
                     containsSelectedDate = date.withIn(month, year),
-                    dayOfMonth = month.getDaysInMonth(year),
+                    dayOfMonth = date.dayOfMonth,
+                    daysInMonth = month.getDaysInMonth(year),
                     firstDayOfWeekOfMonth = month.getFirstDayOfWeekOfMonth(year),
                     width = width,
                     offset = offset,

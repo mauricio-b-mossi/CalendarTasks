@@ -23,6 +23,13 @@ fun DrawScope.drawTitleAndLabels(
     width: Float,
     activeColor: Color,
     inactiveColor: Color,
+    titleTextStyle: TextStyle = TextStyle(
+        color = activeColor,
+        fontSize = 20.sp,
+        fontWeight = FontWeight.Bold,
+        fontFamily = FontFamily.Monospace
+    ),
+    labelTextStyle: TextStyle = TextStyle.Default.copy(fontWeight = FontWeight.SemiBold),
 ) {
     var startingOffset = 0
     for (day in DayOfWeek.values()) {
@@ -37,13 +44,10 @@ fun DrawScope.drawTitleAndLabels(
                 width * day.value - width / 2 - textSize.width / 2,
                 width / 2 - textSize.height / 2 + width
             ),
-            style = if (selectedDate.month == date.month && selectedDate.year == date.year && selectedDate.dayOfWeek == day) TextStyle.Default.copy(
-                color = activeColor,
-                fontWeight = FontWeight.SemiBold
-            ) else TextStyle.Default.copy(
-                color = inactiveColor,
-                fontWeight = FontWeight.SemiBold
+            style = if (selectedDate.month == date.month && selectedDate.year == date.year && selectedDate.dayOfWeek == day) labelTextStyle.copy(
+                color = activeColor
             )
+            else labelTextStyle.copy(color = inactiveColor)
         )
     }
     val text = "${date.month.name} ${date.year}"
@@ -52,12 +56,7 @@ fun DrawScope.drawTitleAndLabels(
         textMeasurer = textMeasurer,
         text = text,
         topLeft = Offset(startingOffset.toFloat(), width / 2 - textSize.height / 2),
-        style = TextStyle(
-            color = activeColor,
-            fontSize = 20.sp,
-            fontWeight = FontWeight.Bold,
-            fontFamily = FontFamily.Monospace
-        )
+        style = titleTextStyle
     )
 }
 

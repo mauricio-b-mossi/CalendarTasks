@@ -32,3 +32,7 @@ fun LocalDate.getDaysInMonth(): Int {
 }
 
 fun LocalDate.withIn(month: Month, year: Int): Boolean = this.month == month && this.year == year
+
+fun LocalDate.monthsFromDate(months : Int) : LocalDate{
+    return LocalDate.of(this.year, this.month + months.toLong(), this.dayOfMonth)
+}

@@ -1,6 +1,7 @@
 package com.example.canvasexperimentation.ui.homeScreen.extensions.drawScope
 
 
+import android.util.Log
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
@@ -25,6 +26,10 @@ fun DrawScope.drawDaysOfMonth(
     textMeasurer: TextMeasurer,
     activeColor: Color,
     selectedColor: Color,
+    textStyle: TextStyle = TextStyle.Default.copy(
+        color = activeColor,
+        fontWeight = FontWeight.SemiBold
+    )
 ) {
     val dateOffset = date.getFirstDayOfWeekOfMonth().ordinal
 
@@ -51,10 +56,7 @@ fun DrawScope.drawDaysOfMonth(
                 width * (if ((i + dateOffset) % 7 == 0) 7 else (i + dateOffset) % 7) - width / 2 - textSize.width / 2,
                 row * width + offset - width / 2 - textSize.height / 2
             ),
-            style = TextStyle.Default.copy(
-                color = activeColor,
-                fontWeight = FontWeight.SemiBold
-            )
+            style = textStyle
         )
 
         if ((i + dateOffset) % 7 == 0) row++
@@ -107,10 +109,12 @@ fun DrawScope.drawDaysOfMonth(
     }
 }
 
+// Does not work, for some reason 30 is printed.
 @OptIn(ExperimentalTextApi::class)
 fun DrawScope.drawDaysOfMonth(
     containsSelectedDate: Boolean,
     dayOfMonth: Int,
+    daysInMonth: Int,
     firstDayOfWeekOfMonth: DayOfWeek,
     width: Float,
     offset: Float,
@@ -121,14 +125,16 @@ fun DrawScope.drawDaysOfMonth(
     val dateOffset = firstDayOfWeekOfMonth.ordinal
 
     var row: Byte = 1;
-    for (i in 1..dayOfMonth) {
+    for (i in 1..daysInMonth) {
         val text = i.toString()
         val textSize = textMeasurer.measure(AnnotatedString(text)).size
         if (containsSelectedDate && i == dayOfMonth) {
+            Log.d("Event", "Contains Selected State")
             val col =
                 if ((dayOfMonth + dateOffset) % 7 == 0) 7 else ((((dayOfMonth + dateOffset) - 1) % 7) + 1)
             val row =
                 if ((dayOfMonth + dateOffset) % 7 == 0) ((dayOfMonth + dateOffset) / 7) else ((dayOfMonth + dateOffset) / 7) + 1
+            Log.d("Event", "Drawing circle at Row: $row Col: $col")
             drawCircle(
                 selectedColor,
                 width / 3,
