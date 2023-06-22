@@ -1,19 +1,17 @@
 package com.example.canvasexperimentation
 
 import android.os.Bundle
-import android.widget.Space
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -21,20 +19,19 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawBehind
-import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.text.ExperimentalTextApi
+import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -43,7 +40,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.canvasexperimentation.data.Status
 import com.example.canvasexperimentation.data.Task
+import com.example.canvasexperimentation.ui.homeScreen.components.BottomSheet
+import com.example.canvasexperimentation.ui.homeScreen.components.BottomSheetStage
 import com.example.canvasexperimentation.ui.homeScreen.components.Month
+import com.example.canvasexperimentation.ui.homeScreen.components.rememberBottomSheetState
 import com.example.canvasexperimentation.ui.theme.calendarBackgroundColor
 import com.example.canvasexperimentation.ui.theme.selectedColor
 import java.time.LocalDate
@@ -56,6 +56,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         setContent {
             val textMeasurer = rememberTextMeasurer()
+
             var date by remember {
                 mutableStateOf(LocalDate.now())
             }
@@ -63,6 +64,19 @@ class MainActivity : ComponentActivity() {
                 generateCalendarRange(LocalDate.now(), 3)
             }
             val lazyListState = rememberLazyListState(getMonthIndex(date, calendarRange.first()))
+
+            val density = LocalDensity.current
+
+            val screenHeightDp = LocalConfiguration.current.screenHeightDp.dp
+
+            val dragSurfaceHeight = remember {
+                with(density) {
+                    screenHeightDp.toPx()
+                }
+            }
+
+            var bottomSheetState = rememberBottomSheetState()
+
             Box(
                 Modifier
                     .fillMaxSize()
@@ -72,13 +86,19 @@ class MainActivity : ComponentActivity() {
                     dateRange = calendarRange,
                     date = date,
                     onDateChange = { date = it },
-                    lazyListState,
+                    state = lazyListState,
+                    textMeasurer = textMeasurer,
                     modifier = Modifier.fillMaxHeight(.5f)
                 )
-                // TODO Put BottomSheet Here!!!
-                BottomSheet {
+                BottomSheet(
+                    bottomSheetState = bottomSheetState,
+                    onDefault = { bottomSheetState.stage = BottomSheetStage.DEFAULT },
+                    onCollapsed = { bottomSheetState.stage = BottomSheetStage.COLLAPSED },
+                    onExpanded = { bottomSheetState.stage = BottomSheetStage.EXPANDED },
+                    dragSurfaceHeight = dragSurfaceHeight,
+                ) {
                     TodoBottomSheet(
-                        date = LocalDate.now().plusMonths(1),
+                        date = date,
                         tasks = listOf(
                             Task(
                                 "Marketing meeting",
@@ -99,6 +119,7 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
 
 @Composable
 fun TodoBottomSheet(
@@ -140,58 +161,22 @@ fun TodoBottomSheet(
     }
 }
 
-@Composable
-fun BoxScope.BottomSheet(
-    modifier: Modifier = Modifier,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(
-        modifier = modifier
-            .align(Alignment.BottomCenter)
-            .fillMaxWidth()
-            .fillMaxHeight(.5f)
-            .clip(RoundedCornerShape(topStart = 25.dp, topEnd = 25.dp))
-            .background(Color.White)
-            .drawBehind {
-                val lineSize = 50.dp.toPx()
-                val startX = size.width / 2 - lineSize / 2
-                drawLine(
-                    Color.LightGray,
-                    Offset(startX, 10.dp.toPx()),
-                    Offset(startX + lineSize, 10.dp.toPx()),
-                    10f
-                )
-            }
-    ) {
-        content()
-    }
-}
 
-data class BottomSheetState(
-    val state: BottomSheetStage = BottomSheetStage.DEFAULT,
-    val snapPoint: Map<BottomSheetState, Float>
-)
-
-enum class BottomSheetStage {
-    DEFAULT,
-    COLLAPSED,
-    EXPANDED
-}
-
-@OptIn(ExperimentalTextApi::class)
+@OptIn(ExperimentalTextApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun CalendarSecondRow(
     dateRange: List<LocalDate>,
     date: LocalDate,
     onDateChange: (LocalDate) -> Unit,
     state: LazyListState = rememberLazyListState(),
+    textMeasurer: TextMeasurer = rememberTextMeasurer(),
     modifier: Modifier = Modifier
 ) {
-    state
     BoxWithConstraints(modifier) {
         val maxWidth = maxWidth
         LazyRow(
-            state = state
+            state = state,
+            flingBehavior = rememberSnapFlingBehavior(lazyListState = state)
         ) {
             items(dateRange) { localDate ->
                 Column(modifier = Modifier.padding(horizontal = 25.dp)) {
@@ -202,6 +187,7 @@ fun CalendarSecondRow(
                         },
                         month = localDate.month,
                         year = localDate.year,
+                        textMeasurer = textMeasurer,
                         modifier = Modifier.width(maxWidth - 50.dp)
                     )
                 }
