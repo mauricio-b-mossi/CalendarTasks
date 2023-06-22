@@ -7,14 +7,14 @@ import java.time.Month
 /**
  * Returns the first day of the week of the month.
  */
-fun LocalDate.getFirstDayOfWeekOfMonth(): DayOfWeek {
+internal fun LocalDate.getFirstDayOfWeekOfMonth(): DayOfWeek {
     return minusDays((dayOfMonth - 1).toLong()).dayOfWeek
 }
 
 /**
  * Returns the number of days in the current month.
  */
-fun LocalDate.getDaysInMonth(): Int {
+internal fun LocalDate.getDaysInMonth(): Int {
     return when (this.month) {
         Month.JANUARY -> 31
         Month.FEBRUARY -> if (isLeapYear) 29 else 28
@@ -31,8 +31,4 @@ fun LocalDate.getDaysInMonth(): Int {
     }
 }
 
-fun LocalDate.withIn(month: Month, year: Int): Boolean = this.month == month && this.year == year
-
-fun LocalDate.monthsFromDate(months : Int) : LocalDate{
-    return LocalDate.of(this.year, this.month + months.toLong(), this.dayOfMonth)
-}
+internal fun LocalDate.withIn(month: Month, year: Int): Boolean = this.month == month && this.year == year

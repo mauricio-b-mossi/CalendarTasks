@@ -4,7 +4,6 @@ import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.runtime.Composable
@@ -47,7 +46,7 @@ fun Month(
         val rows =
             (month.getDaysInMonth(year) + month.getFirstDayOfWeekOfMonth(year).value) / 2 + (offset / width)
 
-        // Extract Box to other side
+        // TODO Move box else where
         Box(Modifier.pointerInput(true) {
             detectTapGestures { touch ->
                 if (touch.y > offset) {
@@ -80,120 +79,6 @@ fun Month(
                     dayOfMonth = date.dayOfMonth,
                     daysInMonth = month.getDaysInMonth(year),
                     firstDayOfWeekOfMonth = month.getFirstDayOfWeekOfMonth(year),
-                    width = width,
-                    offset = offset,
-                    textMeasurer = textMeasurer,
-                    activeColor = activeColor,
-                    selectedColor = selectedColor
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalTextApi::class)
-@Composable
-internal fun Month(
-    selectedDate: LocalDate,
-    date: LocalDate,
-    onDateSelect: (LocalDate) -> Unit,
-    activeColor: Color,
-    inactiveColor: Color,
-    selectedColor: Color,
-    textMeasurer: TextMeasurer = rememberTextMeasurer(),
-    modifier: Modifier = Modifier
-) {
-    val density = LocalDensity.current
-
-    BoxWithConstraints(modifier) {
-
-        val width = with(density) { (maxWidth / 7).toPx() }
-        val offset = 2 * width
-
-        Box(Modifier.pointerInput(true) {
-            detectTapGestures { touch ->
-                if (touch.y > offset) {
-                    val row = ceil(touch.y / width - 2).toInt()
-                    val col = ceil(touch.x / width).toInt()
-                    val dayOfMonth = getDateFromPosition(row, col, date)
-                    if (dayOfMonth != 0) {
-                        onDateSelect(LocalDate.of(date.year, date.month, dayOfMonth))
-                    }
-                }
-            }
-        }) {
-            Canvas(
-                modifier.fillMaxSize()
-            ) {
-                drawTitleAndLabels(
-                    selectedDate = selectedDate,
-                    date = date,
-                    textMeasurer = textMeasurer,
-                    width = width,
-                    activeColor = activeColor,
-                    inactiveColor = inactiveColor,
-                )
-                drawDaysOfMonth(
-                    selectedDate = selectedDate,
-                    date = date,
-                    width = width,
-                    offset = offset,
-                    textMeasurer = textMeasurer,
-                    activeColor = activeColor,
-                    selectedColor = selectedColor
-                )
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalTextApi::class)
-@Composable
-internal fun Month(
-    date: LocalDate,
-    onDateSelect: (LocalDate) -> Unit,
-    activeColor: Color,
-    inactiveColor: Color,
-    selectedColor: Color,
-    textMeasurer: TextMeasurer = rememberTextMeasurer(),
-    modifier: Modifier = Modifier
-) {
-    val density = LocalDensity.current
-
-    BoxWithConstraints(modifier) {
-
-        val width = with(density) { (maxWidth / 7).toPx() }
-        val offset = 2 * width
-
-        Box(Modifier.pointerInput(true) {
-            detectTapGestures { touch ->
-                if (touch.y > offset) {
-                    val row = ceil(touch.y / width - 2).toInt()
-                    val col = ceil(touch.x / width).toInt()
-                    val dayOfMonth = getDateFromPosition(row, col, date)
-                    if (dayOfMonth != 0) {
-                        onDateSelect(LocalDate.of(date.year, date.month, dayOfMonth))
-                    }
-                }
-            }
-        }) {
-            Canvas(
-                modifier.fillMaxSize()
-            ) {
-                drawTitleAndLabels(
-                    month = date.month,
-                    year = date.year,
-                    textMeasurer = textMeasurer,
-                    width = width,
-                    activeColor = activeColor,
-                    inactiveColor = inactiveColor,
-                    activeDay = date.dayOfWeek
-                )
-                drawDaysOfMonth(
-                    month = date.month,
-                    dayOfMonth = date.dayOfMonth,
-                    isLeapYear = date.isLeapYear,
-                    firstDayOfWeekOfMonth = date.getFirstDayOfWeekOfMonth(),
                     width = width,
                     offset = offset,
                     textMeasurer = textMeasurer,

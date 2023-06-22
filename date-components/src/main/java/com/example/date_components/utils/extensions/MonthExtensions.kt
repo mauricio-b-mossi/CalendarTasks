@@ -5,16 +5,22 @@ import java.time.LocalDate
 import java.time.Month
 
 /**
- * Returns the first day of the week of the month.
+ * Returns the first day of the week for the specified year and month.
+ *
+ * @param year the year
+ * @return the first day of the week for the specified year and month
  */
 fun Month.getFirstDayOfWeekOfMonth(year: Int): DayOfWeek {
     return LocalDate.of(year, this, 1).dayOfWeek
 }
 
 /**
- * Returns the number of days in the current month.
+ * Returns the number of days in the month based on the given leap year status.
+ *
+ * @param isLeapYear a boolean indicating whether the month is part of a leap year
+ * @return the number of days in the month
  */
-fun Month.getDaysInMonth(isLeapYear: Boolean): Int {
+internal fun Month.getDaysInMonth(isLeapYear: Boolean): Int {
     return when (this) {
         Month.JANUARY -> 31
         Month.FEBRUARY -> if (isLeapYear) 29 else 28
@@ -32,9 +38,12 @@ fun Month.getDaysInMonth(isLeapYear: Boolean): Int {
 }
 
 /**
- * Returns the number of days in the current month.
+ * Returns the number of days in the month based on the given year.
+ *
+ * @param year the year
+ * @return the number of days in the month
  */
-fun Month.getDaysInMonth(year: Int): Int {
+internal fun Month.getDaysInMonth(year: Int): Int {
     return when (this) {
         Month.JANUARY -> 31
         Month.FEBRUARY -> if (year.isLeapYear()) 29 else 28
