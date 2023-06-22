@@ -55,9 +55,11 @@ enum class BottomSheetStage {
 @Stable
 class BottomSheetState(
     stage: BottomSheetStage = BottomSheetStage.DEFAULT,
-    val snapPoint: BottomSheetStageSnapPoints
+    isDragging: Boolean = false,
+    val snapPoint: BottomSheetStageSnapPoints,
 ) {
     var stage by mutableStateOf(stage)
+    var isDragging by mutableStateOf(false)
 }
 
 
@@ -75,7 +77,7 @@ fun rememberBottomSheetState(
     }
 ): BottomSheetState {
     return remember {
-        BottomSheetState(stage, snapPoints)
+        BottomSheetState(stage = stage, snapPoint = snapPoints)
     }
 }
 
@@ -87,39 +89,31 @@ fun BoxScope.BottomSheet(
     onDefault: () -> Unit,
     onExpanded: () -> Unit,
     onCollapsed: () -> Unit,
+    onDragStart: () -> Unit,
+    onDragEnd: () -> Unit,
     dragSurfaceHeight: Float,
     modifier: Modifier = Modifier,
     content: @Composable ColumnScope.() -> Unit
 ) {
-
-
     var currentPercentageOffset by remember {
         mutableStateOf(0.5f)
     }
 
-    // Problem is it does not recompose when the key remains the same!
-    LaunchedEffect(key1 = bottomSheetState.stage) {
-        Log.d("Drag", "LaunchEffect shot with ${bottomSheetState.stage}")
-        currentPercentageOffset = if (bottomSheetState.stage == BottomSheetStage.EXPANDED) {
-            1f
-        } else if (bottomSheetState.stage == BottomSheetStage.COLLAPSED) {
-            0.3f
-        } else 0.5f
+    val animateFloat: Float by animateFloatAsState(
+        targetValue = when (bottomSheetState.stage) {
+            BottomSheetStage.DEFAULT -> bottomSheetState.snapPoint.DEFAULT
+            BottomSheetStage.COLLAPSED -> bottomSheetState.snapPoint.COLLAPSED
+            BottomSheetStage.EXPANDED -> bottomSheetState.snapPoint.EXPANDED
+        },
+        animationSpec = tween(2000)
+    )
+
+    LaunchedEffect(key1 = bottomSheetState.stage, key2 = bottomSheetState.isDragging) {
+        Log.d("Drag", "${bottomSheetState.isDragging}")
+        Log.d("Drag", "${bottomSheetState.stage}")
+        Log.d("Drag", "Animate Float ${animateFloat}")
+        currentPercentageOffset = animateFloat
     }
-
-    //val animateFloat: Float by animateFloatAsState(
-    //targetValue = when (bottomSheetState.stage) {
-    //BottomSheetStage.DEFAULT -> bottomSheetState.snapPoint.DEFAULT
-    //BottomSheetStage.COLLAPSED -> bottomSheetState.snapPoint.COLLAPSED
-    //BottomSheetStage.EXPANDED -> bottomSheetState.snapPoint.EXPANDED
-    //},
-    //animationSpec = tween(2000)
-    //)
-
-    //LaunchedEffect(key1 = bottomSheetState.stage) {
-    //Log.d("Drag", "Animate Float ${animateFloat}")
-    //currentPercentageOffset = animateFloat
-    //}
 
     Column(modifier = modifier
         .align(Alignment.BottomCenter)
@@ -144,7 +138,9 @@ fun BoxScope.BottomSheet(
             onPercentageOffsetChange = { currentPercentageOffset += it },
             onDefault = { onDefault() },
             onExpanded = { onExpanded() },
-            onCollapsed = { onCollapsed() }
+            onCollapsed = { onCollapsed() },
+            onDragStart = { onDragStart() },
+            onDragEnd = { onDragEnd() }
         )
     ) {
         content()
@@ -158,7 +154,9 @@ fun Modifier.bottomSheet(
     onPercentageOffsetChange: (Float) -> Unit,
     onDefault: () -> Unit,
     onExpanded: () -> Unit,
-    onCollapsed: () -> Unit
+    onCollapsed: () -> Unit,
+    onDragStart: () -> Unit,
+    onDragEnd: () -> Unit
 ): Modifier {
     return this.then(
         pointerInput(true) {
@@ -187,8 +185,9 @@ fun Modifier.bottomSheet(
                         onCollapsed()
                     }
                 }
+                onDragEnd()
             }) { _, dragAmount ->
-
+                onDragStart()
                 val dragAmountPercentage = dragAmount / dragSurfaceHeight
                 onPercentageOffsetChange(-dragAmountPercentage)
             }

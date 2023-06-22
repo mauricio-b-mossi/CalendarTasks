@@ -95,6 +95,8 @@ class MainActivity : ComponentActivity() {
                     onDefault = { bottomSheetState.stage = BottomSheetStage.DEFAULT },
                     onCollapsed = { bottomSheetState.stage = BottomSheetStage.COLLAPSED },
                     onExpanded = { bottomSheetState.stage = BottomSheetStage.EXPANDED },
+                    onDragStart = { bottomSheetState.isDragging = true },
+                    onDragEnd = { bottomSheetState.isDragging = false },
                     dragSurfaceHeight = dragSurfaceHeight,
                 ) {
                     TodoBottomSheet(
