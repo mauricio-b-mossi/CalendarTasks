@@ -3,21 +3,14 @@ package com.example.canvasexperimentation
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -29,9 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.text.ExperimentalTextApi
-import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
@@ -42,13 +33,15 @@ import com.example.canvasexperimentation.data.Status
 import com.example.canvasexperimentation.data.Task
 import com.example.canvasexperimentation.ui.homeScreen.components.BottomSheet
 import com.example.canvasexperimentation.ui.homeScreen.components.BottomSheetStage
-import com.example.canvasexperimentation.ui.homeScreen.components.Month
 import com.example.canvasexperimentation.ui.homeScreen.components.rememberBottomSheetState
+import com.example.canvasexperimentation.ui.theme.activeColor
 import com.example.canvasexperimentation.ui.theme.calendarBackgroundColor
+import com.example.canvasexperimentation.ui.theme.inactiveColor
 import com.example.canvasexperimentation.ui.theme.selectedColor
+import com.example.date_components.ui.components.CalendarRow
+import com.example.date_components.ui.components.generateCalendarRange
+import com.example.date_components.ui.components.getMonthIndex
 import java.time.LocalDate
-import java.time.Month
-import java.time.temporal.ChronoUnit
 
 class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalTextApi::class)
@@ -75,19 +68,23 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            var bottomSheetState = rememberBottomSheetState()
+            val bottomSheetState = rememberBottomSheetState()
 
             Box(
                 Modifier
                     .fillMaxSize()
                     .background(calendarBackgroundColor),
             ) {
-                CalendarSecondRow(
+                CalendarRow(
                     dateRange = calendarRange,
                     date = date,
                     onDateChange = { date = it },
                     state = lazyListState,
                     textMeasurer = textMeasurer,
+                    activeColor = activeColor,
+                    inactiveColor = inactiveColor,
+                    selectedColor = selectedColor,
+                    itemPadding = 35.dp,
                     modifier = Modifier.fillMaxHeight(.5f)
                 )
                 BottomSheet(
@@ -160,65 +157,5 @@ fun TodoBottomSheet(
 
         //Tasks
 
-    }
-}
-
-
-@OptIn(ExperimentalTextApi::class, ExperimentalFoundationApi::class)
-@Composable
-fun CalendarSecondRow(
-    dateRange: List<LocalDate>,
-    date: LocalDate,
-    onDateChange: (LocalDate) -> Unit,
-    state: LazyListState = rememberLazyListState(),
-    textMeasurer: TextMeasurer = rememberTextMeasurer(),
-    modifier: Modifier = Modifier
-) {
-    BoxWithConstraints(modifier) {
-        val maxWidth = maxWidth
-        LazyRow(
-            state = state,
-            flingBehavior = rememberSnapFlingBehavior(lazyListState = state)
-        ) {
-            items(dateRange) { localDate ->
-                Column(modifier = Modifier.padding(horizontal = 25.dp)) {
-                    Month(
-                        date = date,
-                        onDateSelect = { localDate ->
-                            onDateChange(localDate)
-                        },
-                        month = localDate.month,
-                        year = localDate.year,
-                        textMeasurer = textMeasurer,
-                        modifier = Modifier.width(maxWidth - 50.dp)
-                    )
-                }
-            }
-        }
-    }
-
-}
-
-
-fun generateCalendarRange(date: LocalDate = LocalDate.now(), range: Int): List<LocalDate> {
-    val start = LocalDate.of(date.year - range, Month.JANUARY, 1)
-    val end = LocalDate.of(date.year + range, Month.DECEMBER, 1)
-    val months = start.until(end, ChronoUnit.MONTHS)
-    return buildList {
-        for (i in 0..months) {
-            add(LocalDate.of(start.year.plus(i / 12).toInt(), ((i % 12) + 1).toInt(), 1))
-        }
-    }
-}
-
-fun getMonthIndex(currentDate: LocalDate = LocalDate.now(), fromDate: LocalDate): Int {
-    return if (currentDate.month.value >= fromDate.month.value && currentDate.year >= fromDate.year) {
-        (currentDate.month.value - fromDate.month.value) + (currentDate.year - fromDate.year) * 12
-    } else if (currentDate.month.value < fromDate.month.value && currentDate.year >= fromDate.year) {
-        (currentDate.year - fromDate.year) * 12 - (fromDate.month.value - currentDate.month.value)
-    } else if (currentDate.month.value < fromDate.month.value && currentDate.year < fromDate.year) {
-        (fromDate.year - currentDate.year) * 12 - (currentDate.month.value - fromDate.month.value)
-    } else {
-        (fromDate.month.value - currentDate.month.value) + (fromDate.year - currentDate.year) * 12
     }
 }

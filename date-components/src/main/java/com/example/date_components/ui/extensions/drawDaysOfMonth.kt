@@ -11,8 +11,8 @@ import androidx.compose.ui.text.TextMeasurer
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.drawText
 import androidx.compose.ui.text.font.FontWeight
-import com.example.canvasexperimentation.utils.extensions.getDaysInMonth
-import com.example.canvasexperimentation.utils.extensions.getFirstDayOfWeekOfMonth
+import com.example.date_components.utils.extensions.getDaysInMonth
+import com.example.date_components.utils.extensions.getFirstDayOfWeekOfMonth
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.Month

@@ -99,21 +99,21 @@ fun BoxScope.BottomSheet(
         mutableStateOf(0.5f)
     }
 
-    val animateFloat: Float by animateFloatAsState(
-        targetValue = when (bottomSheetState.stage) {
-            BottomSheetStage.DEFAULT -> bottomSheetState.snapPoint.DEFAULT
-            BottomSheetStage.COLLAPSED -> bottomSheetState.snapPoint.COLLAPSED
-            BottomSheetStage.EXPANDED -> bottomSheetState.snapPoint.EXPANDED
-        },
-        animationSpec = tween(2000)
-    )
+    //val animateFloat: Float by animateFloatAsState(
+        //targetValue = when (bottomSheetState.stage) {
+            //BottomSheetStage.DEFAULT -> bottomSheetState.snapPoint.DEFAULT
+            //BottomSheetStage.COLLAPSED -> bottomSheetState.snapPoint.COLLAPSED
+            //BottomSheetStage.EXPANDED -> bottomSheetState.snapPoint.EXPANDED
+        //},
+        //animationSpec = tween(2000)
+    //)
 
-    LaunchedEffect(key1 = bottomSheetState.stage, key2 = bottomSheetState.isDragging) {
-        Log.d("Drag", "${bottomSheetState.isDragging}")
-        Log.d("Drag", "${bottomSheetState.stage}")
-        Log.d("Drag", "Animate Float ${animateFloat}")
-        currentPercentageOffset = animateFloat
-    }
+     //LaunchedEffect(key1 = bottomSheetState.stage, key2 = bottomSheetState.isDragging) {
+         //Log.d("Drag", "${bottomSheetState.isDragging}")
+         //Log.d("Drag", "${bottomSheetState.stage}")
+         //Log.d("Drag", "Animate Float ${animateFloat}")
+         //currentPercentageOffset = animateFloat
+     //}
 
     Column(modifier = modifier
         .align(Alignment.BottomCenter)
