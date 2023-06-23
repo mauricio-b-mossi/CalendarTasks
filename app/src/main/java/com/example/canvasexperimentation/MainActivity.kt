@@ -1,8 +1,11 @@
 package com.example.canvasexperimentation
 
+import android.app.Activity
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,10 +13,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,6 +26,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.res.booleanResource
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -29,11 +35,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.canvasexperimentation.data.Status
+import com.example.bottomsheet_component.ui.BottomSheet
+import com.example.bottomsheet_component.ui.BottomSheetStage
+import com.example.bottomsheet_component.ui.BottomSheetStagePercentage
+import com.example.bottomsheet_component.ui.rememberBottomSheetState
 import com.example.canvasexperimentation.data.Task
-import com.example.canvasexperimentation.ui.homeScreen.components.BottomSheet
-import com.example.canvasexperimentation.ui.homeScreen.components.BottomSheetStage
-import com.example.canvasexperimentation.ui.homeScreen.components.rememberBottomSheetState
 import com.example.canvasexperimentation.ui.theme.activeColor
 import com.example.canvasexperimentation.ui.theme.calendarBackgroundColor
 import com.example.canvasexperimentation.ui.theme.inactiveColor
@@ -41,6 +47,7 @@ import com.example.canvasexperimentation.ui.theme.selectedColor
 import com.example.date_components.ui.components.CalendarRow
 import com.example.date_components.ui.components.generateCalendarRange
 import com.example.date_components.ui.components.getMonthIndex
+import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
@@ -48,8 +55,16 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            val textMeasurer = rememberTextMeasurer()
 
+            val bottomSheetState = rememberBottomSheetState(
+                startStage = BottomSheetStage.DEFAULT,
+                bottomSheetStagePercentage = BottomSheetStagePercentage(
+                    DEFAULT = 0.5F,
+                    EXPANDED = 1F,
+                    COLLAPSED = 0.03F
+                )
+            )
+            val textMeasurer = rememberTextMeasurer()
             var date by remember {
                 mutableStateOf(LocalDate.now())
             }
@@ -58,17 +73,17 @@ class MainActivity : ComponentActivity() {
             }
             val lazyListState = rememberLazyListState(getMonthIndex(date, calendarRange.first()))
 
-            val density = LocalDensity.current
+            val systemUiController = rememberSystemUiController()
 
-            val screenHeightDp = LocalConfiguration.current.screenHeightDp.dp
 
-            val dragSurfaceHeight = remember {
-                with(density) {
-                    screenHeightDp.toPx()
+            LaunchedEffect(bottomSheetState.stage, bottomSheetState.isDragging) {
+                if (bottomSheetState.stage == BottomSheetStage.EXPANDED && !bottomSheetState.isDragging) {
+                    systemUiController.setStatusBarColor(Color.White)
+                } else {
+                    systemUiController.setStatusBarColor(calendarBackgroundColor)
                 }
             }
 
-            val bottomSheetState = rememberBottomSheetState()
 
             Box(
                 Modifier
@@ -87,32 +102,14 @@ class MainActivity : ComponentActivity() {
                     itemPadding = 35.dp,
                     modifier = Modifier.fillMaxHeight(.5f)
                 )
+
                 BottomSheet(
                     bottomSheetState = bottomSheetState,
-                    onDefault = { bottomSheetState.stage = BottomSheetStage.DEFAULT },
-                    onCollapsed = { bottomSheetState.stage = BottomSheetStage.COLLAPSED },
-                    onExpanded = { bottomSheetState.stage = BottomSheetStage.EXPANDED },
-                    onDragStart = { bottomSheetState.isDragging = true },
-                    onDragEnd = { bottomSheetState.isDragging = false },
-                    dragSurfaceHeight = dragSurfaceHeight,
+                    onDefault = { Log.d("Event", "onDefault") },
+                    onExpanded = { Log.d("Event", "OnExpanded") },
+                    onCollapsed = { Log.d("Event", "OnCollapsed") }
                 ) {
-                    TodoBottomSheet(
-                        date = date,
-                        tasks = listOf(
-                            Task(
-                                "Marketing meeting",
-                                calendarBackgroundColor,
-                                Status.DONE,
-                            ),
-                            Task(
-                                "Client meeting",
-                                Color.Red,
-                                Status.IN_PROGRESS,
-                            )
-                        ),
-                        onAddTask = {},
-                        modifier = Modifier.padding(25.dp)
-                    )
+                    TodoBottomSheet(date = date)
                 }
             }
         }
@@ -123,12 +120,11 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TodoBottomSheet(
     date: LocalDate,
-    tasks: List<Task>,
-    onAddTask: (Task) -> Unit,
+    tasks: List<Task> = emptyList(),
+    onAddTask: (Task) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     Column(modifier) {
-        // Header:
         if (date == LocalDate.now()) {
             Text(
                 text = "Today", style = TextStyle(
@@ -155,7 +151,6 @@ fun TodoBottomSheet(
 
         Spacer(Modifier.height(16.dp))
 
-        //Tasks
 
     }
 }

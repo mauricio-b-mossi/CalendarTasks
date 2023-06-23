@@ -12,7 +12,6 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import java.time.DayOfWeek
-import java.time.LocalDate
 import java.time.Month
 
 @OptIn(ExperimentalTextApi::class)
