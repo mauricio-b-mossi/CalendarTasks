@@ -1,6 +1,7 @@
 package com.example.date_components.ui.components
 
 
+import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
@@ -71,7 +72,9 @@ fun CalendarRow(
                         month = localDate.month,
                         year = localDate.year,
                         textMeasurer = textMeasurer,
-                        modifier = Modifier.width(maxWidth - itemPadding * 2).height(400.dp)
+                        modifier = Modifier
+                            .width(maxWidth - itemPadding * 2)
+                            .height(400.dp)
                     )
                 }
             }
@@ -94,10 +97,10 @@ fun Calendar(
     modifier: Modifier = Modifier
 ) {
     BoxWithConstraints(modifier) {
+        Log.d("Constraints", "Calendar $constraints")
         val maxWidth = maxWidth
         if (calendarState.calendarOrientation == CalendarOrientation.ROW) {
             LazyRow(
-                modifier = Modifier.background(Color.Red),
                 state = calendarState.lazyListState,
                 flingBehavior = rememberSnapFlingBehavior(lazyListState = calendarState.lazyListState)
             ) {
@@ -114,7 +117,8 @@ fun Calendar(
                             month = localDate.month,
                             year = localDate.year,
                             textMeasurer = textMeasurer,
-                            modifier = Modifier.width(maxWidth - itemPadding * 2).height(400.dp)
+                            modifier = Modifier
+                                .width(maxWidth - itemPadding * 2)
                         )
                     }
                 }
@@ -123,7 +127,7 @@ fun Calendar(
             LazyColumn(
                 state = calendarState.lazyListState
             ) {
-                itemsIndexed(calendarState.dateRange) { index ,localDate ->
+                items(calendarState.dateRange) { localDate ->
                     Column(modifier = Modifier.padding(horizontal = itemPadding)) {
                         Month(
                             date = date,
@@ -137,7 +141,7 @@ fun Calendar(
                             year = localDate.year,
                             textMeasurer = textMeasurer,
                             modifier = Modifier
-                                .width(maxWidth - itemPadding * 2).heightIn(min = maxWidth - itemPadding, max = maxWidth)
+                                .width(maxWidth - itemPadding * 2)
                         )
                     }
                 }

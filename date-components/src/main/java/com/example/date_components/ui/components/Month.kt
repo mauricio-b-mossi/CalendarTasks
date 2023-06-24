@@ -44,7 +44,7 @@ fun Month(
         val offset = 2 * width
         val maxWidth = maxWidth
         val rows =
-            (month.getDaysInMonth(year) + month.getFirstDayOfWeekOfMonth(year).value) / 2 + (offset / width)
+            (ceil((month.getDaysInMonth(year) + month.getFirstDayOfWeekOfMonth(year).ordinal) / 7f) + offset / width).toInt()
 
         // TODO Move box else where
         Box(Modifier.pointerInput(true) {
@@ -62,7 +62,7 @@ fun Month(
             Canvas(
                 Modifier
                     .width(maxWidth)
-                    .height(maxWidth / 7 * rows)
+                    .height((maxWidth / 7) * rows)
             ) {
                 drawTitleAndLabels(
                     containsSelectedDate = date.withIn(month, year),

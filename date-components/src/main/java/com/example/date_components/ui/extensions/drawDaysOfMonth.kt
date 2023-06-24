@@ -28,6 +28,7 @@ internal fun DrawScope.drawDaysOfMonth(
         fontWeight = FontWeight.SemiBold
     )
 ) {
+
     val dateOffset = firstDayOfWeekOfMonth.ordinal
 
     var row: Byte = 1;

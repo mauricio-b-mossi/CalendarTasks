@@ -31,4 +31,8 @@ internal fun LocalDate.getDaysInMonth(): Int {
     }
 }
 
-internal fun LocalDate.withIn(month: Month, year: Int): Boolean = this.month == month && this.year == year
+internal fun LocalDate.withIn(month: Month, year: Int): Boolean =
+    this.month == month && this.year == year
+
+fun LocalDate.getRowsInMonth(offset: Int = 0): Int =
+    (getDaysInMonth() + getFirstDayOfWeekOfMonth().value) / 2 + offset
