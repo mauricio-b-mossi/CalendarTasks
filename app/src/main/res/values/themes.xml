@@ -3,5 +3,6 @@
 
     <style name="Theme.CanvasExperimentation" parent="android:Theme.Material.Light.NoActionBar" >
         <item name="android:navigationBarColor">#FFFFFF</item>
+        <item name="android:statusBarColor">#6CBBDB</item>
     </style>
 </resources>

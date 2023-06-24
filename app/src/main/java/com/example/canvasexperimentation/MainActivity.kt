@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -69,36 +70,18 @@ class MainActivity : ComponentActivity() {
             var date by remember {
                 mutableStateOf(LocalDate.now())
             }
+
+            // Create rememberCalendar
             val calendarRange = remember {
                 generateCalendarRange(LocalDate.now(), 3)
             }
             val lazyListState = rememberLazyListState(getMonthIndex(date, calendarRange.first()))
 
-            val systemUiController = rememberSystemUiController()
-
-            val isExpandedAndIsDragging by remember {
-                derivedStateOf {
-                    with(bottomSheetState){
-                        stage == BottomSheetStage.EXPANDED && !isDragging && screenPercentage.value > (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.EXPANDED) / 2
-                    }
-                }
-            }
-
-
-            LaunchedEffect(bottomSheetState.stage, bottomSheetState.isDragging) {
-                if (isExpandedAndIsDragging) {
-                    systemUiController.setStatusBarColor(Color.White)
-                } else {
-                    systemUiController.setStatusBarColor(calendarBackgroundColor)
-                }
-            }
-
-
             Box(
                 Modifier
                     .fillMaxSize()
                     .drawBehind {
-                        drawRect(if (isExpandedAndIsDragging) Color.White else calendarBackgroundColor)
+                        drawRect(calendarBackgroundColor)
                     }
             ) {
                 CalendarRow(
