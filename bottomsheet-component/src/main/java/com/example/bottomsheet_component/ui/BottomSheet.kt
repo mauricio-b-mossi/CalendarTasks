@@ -20,6 +20,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.composed
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
@@ -57,9 +58,10 @@ fun BoxScope.BottomSheet(
             .fillMaxHeight(bottomSheetState.screenPercentage.value)
             .clip(RoundedCornerShape(topEnd = 25.dp, topStart = 25.dp))
             .background(Color.White)
-            .snapDrag(
+            .smoothSnapDrag(
                 bottomSheetState,
                 coroutineScope,
+                screenHeight = height,
                 onDefault = { onDefault() },
                 onCollapsed = { onCollapsed },
                 onExpanded = { onExpanded })
@@ -133,7 +135,145 @@ class BottomSheetState(
 
 }
 
-fun Modifier.smoothDrag(
+internal data class Cache(val current: Float, val previous: Float)
+
+internal fun Modifier.smoothSnapDrag(
+    bottomSheetState: BottomSheetState,
+    coroutineScope: CoroutineScope,
+    screenHeight: Float,
+    onDefault: () -> Unit = {},
+    onExpanded: () -> Unit = {},
+    onCollapsed: () -> Unit = {},
+    lowerBoundary: Int = 20,
+    upperBoundary: Int = 100,
+): Modifier {
+    return this.composed {
+        var cache: Cache by remember {
+            mutableStateOf(Cache(0f, 0f))
+        }
+        pointerInput(true) {
+            detectVerticalDragGestures(
+                onDragEnd = {
+                    Log.d("Cache", "${abs(cache.current - cache.previous)}")
+
+                    bottomSheetState.isDragging = false
+
+                    if (abs(cache.current - cache.previous) > lowerBoundary) {
+                        Log.d(
+                            "Drag",
+                            "Cache IS larger than 40 ${abs(cache.current - cache.previous)}"
+                        )
+                        if (cache.current > cache.previous) {
+                            if (abs(cache.current - cache.previous) > upperBoundary) {
+                                if (bottomSheetState.stage != BottomSheetStage.COLLAPSED) {
+                                    coroutineScope.launch {
+                                        bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                                        bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                                        onCollapsed()
+                                    }
+                                }
+                            } else {
+                                if (bottomSheetState.stage == BottomSheetStage.EXPANDED) {
+                                    coroutineScope.launch {
+                                        bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                                        bottomSheetState.stage = BottomSheetStage.DEFAULT
+                                        onDefault()
+                                    }
+                                } else if (bottomSheetState.stage == BottomSheetStage.DEFAULT) {
+                                    coroutineScope.launch {
+                                        bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                                        bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                                        onCollapsed()
+                                    }
+                                }
+                            }
+                        }
+
+                        // Swipe Up = prev > curr
+                        else if (cache.previous > cache.current) {
+                            if (abs(cache.current - cache.previous) > upperBoundary) {
+                                if (bottomSheetState.stage != BottomSheetStage.EXPANDED) {
+                                    coroutineScope.launch {
+                                        bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                                        bottomSheetState.stage = BottomSheetStage.EXPANDED
+                                        onExpanded()
+                                    }
+                                }
+                            } else {
+                                if (bottomSheetState.stage == BottomSheetStage.DEFAULT) {
+                                    coroutineScope.launch {
+                                        bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                                        bottomSheetState.stage = BottomSheetStage.EXPANDED
+                                        onExpanded()
+                                    }
+                                } else if (bottomSheetState.stage == BottomSheetStage.COLLAPSED) {
+                                    coroutineScope.launch {
+                                        bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                                        bottomSheetState.stage = BottomSheetStage.DEFAULT
+                                        onDefault()
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        Log.d(
+                            "Drag",
+                            "Cache is NOT larger than 40 ${abs(cache.current - cache.previous)}"
+                        )
+                        if (
+                            with(bottomSheetState) {
+                                // 1.5f
+                                screenPercentage.value > (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.EXPANDED) / 2
+                            }) {
+                            coroutineScope.launch {
+                                bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                                bottomSheetState.stage = BottomSheetStage.EXPANDED
+                                onExpanded()
+                            }
+                        } else if (
+                            with(bottomSheetState) {
+                                // 0.53f
+                                screenPercentage.value < (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.COLLAPSED) / 2
+                            })
+                            coroutineScope.launch {
+                                bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                                bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                                onCollapsed()
+                            }
+                        else {
+                            coroutineScope.launch {
+                                bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                                bottomSheetState.stage = BottomSheetStage.DEFAULT
+                                onDefault()
+                            }
+                        }
+                    }
+                }
+            ) { change, dragAmount ->
+
+                bottomSheetState.isDragging = true
+                cache = Cache(change.position.y, change.previousPosition.y)
+
+                if (bottomSheetState.screenPercentage.value - (dragAmount / screenHeight) < bottomSheetState.bottomSheetStagePercentage.COLLAPSED) {
+                    coroutineScope.launch {
+                        bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                    }
+                } else if (bottomSheetState.screenPercentage.value - (dragAmount / screenHeight) > bottomSheetState.bottomSheetStagePercentage.EXPANDED) {
+                    coroutineScope.launch {
+                        bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                    }
+                } else {
+                    coroutineScope.launch {
+                        bottomSheetState.screenPercentage.snapTo(bottomSheetState.screenPercentage.value - dragAmount / screenHeight)
+                    }
+                }
+
+            }
+        }
+    }
+}
+
+internal fun Modifier.smoothDrag(
     bottomSheetState: BottomSheetState,
     coroutineScope: CoroutineScope,
     screenHeight: Float,
@@ -141,66 +281,65 @@ fun Modifier.smoothDrag(
     onExpanded: () -> Unit = {},
     onCollapsed: () -> Unit = {}
 ): Modifier {
-    return this.then(pointerInput(true) {
-        detectVerticalDragGestures(
-            onDragEnd = {
-                bottomSheetState.isDragging = false
-                Log.d(
-                    "Drag",
-                    "Animation Running: ${bottomSheetState.screenPercentage.isRunning}"
-                )
-                if (!bottomSheetState.screenPercentage.isRunning) {
-                    if (
-                        with(bottomSheetState) {
-                            // 1.5f
-                            screenPercentage.value > (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.EXPANDED) / 2
-                        }) {
-                        coroutineScope.launch {
-                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
-                            bottomSheetState.stage = BottomSheetStage.EXPANDED
-                            onExpanded()
-                        }
-                    } else if (
-                        with(bottomSheetState) {
-                            // 0.53f
-                            screenPercentage.value < (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.COLLAPSED) / 2
-                        })
-                        coroutineScope.launch {
-                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
-                            bottomSheetState.stage = BottomSheetStage.COLLAPSED
-                            onCollapsed()
-                        }
-                    else {
-                        coroutineScope.launch {
-                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
-                            bottomSheetState.stage = BottomSheetStage.DEFAULT
-                            onDefault()
+    return this.then(
+        pointerInput(true) {
+            detectVerticalDragGestures(
+                onDragEnd = {
+
+                    bottomSheetState.isDragging = false
+
+                    if (!bottomSheetState.screenPercentage.isRunning) {
+                        if (
+                            with(bottomSheetState) {
+                                // 1.5f
+                                screenPercentage.value > (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.EXPANDED) / 2
+                            }) {
+                            coroutineScope.launch {
+                                bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                                bottomSheetState.stage = BottomSheetStage.EXPANDED
+                                onExpanded()
+                            }
+                        } else if (
+                            with(bottomSheetState) {
+                                // 0.53f
+                                screenPercentage.value < (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.COLLAPSED) / 2
+                            })
+                            coroutineScope.launch {
+                                bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                                bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                                onCollapsed()
+                            }
+                        else {
+                            coroutineScope.launch {
+                                bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                                bottomSheetState.stage = BottomSheetStage.DEFAULT
+                                onDefault()
+                            }
                         }
                     }
                 }
-            }
-        ) { change, dragAmount ->
+            ) { change, dragAmount ->
 
-            bottomSheetState.isDragging = true
+                bottomSheetState.isDragging = true
 
-            if (bottomSheetState.screenPercentage.value - (dragAmount / screenHeight) < bottomSheetState.bottomSheetStagePercentage.COLLAPSED) {
-                coroutineScope.launch {
-                    bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
-                }
-            } else if (bottomSheetState.screenPercentage.value - (dragAmount / screenHeight) > bottomSheetState.bottomSheetStagePercentage.EXPANDED) {
-                coroutineScope.launch {
-                    bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
-                }
-            } else {
-                coroutineScope.launch {
-                    bottomSheetState.screenPercentage.snapTo(bottomSheetState.screenPercentage.value - dragAmount / screenHeight)
+                if (bottomSheetState.screenPercentage.value - (dragAmount / screenHeight) < bottomSheetState.bottomSheetStagePercentage.COLLAPSED) {
+                    coroutineScope.launch {
+                        bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                    }
+                } else if (bottomSheetState.screenPercentage.value - (dragAmount / screenHeight) > bottomSheetState.bottomSheetStagePercentage.EXPANDED) {
+                    coroutineScope.launch {
+                        bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                    }
+                } else {
+                    coroutineScope.launch {
+                        bottomSheetState.screenPercentage.snapTo(bottomSheetState.screenPercentage.value - dragAmount / screenHeight)
+                    }
                 }
             }
-        }
-    })
+        })
 }
 
-fun Modifier.snapDrag(
+internal fun Modifier.snapDrag(
     bottomSheetState: BottomSheetState,
     coroutineScope: CoroutineScope,
     onDefault: () -> Unit = {},
