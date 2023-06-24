@@ -63,8 +63,8 @@ fun BoxScope.BottomSheet(
                 coroutineScope,
                 screenHeight = height,
                 onDefault = { onDefault() },
-                onCollapsed = { onCollapsed },
-                onExpanded = { onExpanded })
+                onCollapsed = { onCollapsed() },
+                onExpanded = { onExpanded() })
             .drawBehind {
                 drawLine(
                     color = Color.LightGray,
