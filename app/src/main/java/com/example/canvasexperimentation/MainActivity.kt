@@ -62,7 +62,7 @@ class MainActivity : ComponentActivity() {
                 bottomSheetStagePercentage = BottomSheetStagePercentage(
                     DEFAULT = 0.5F,
                     EXPANDED = 1F,
-                    COLLAPSED = 0.03F
+                    COLLAPSED = 0.1F
                 )
             )
             val textMeasurer = rememberTextMeasurer()
@@ -138,7 +138,7 @@ fun TodoBottomSheet(
     Column(modifier) {
         if (date == LocalDate.now()) {
             Text(
-                text = "Today", style = TextStyle(
+                text = "TODAY", style = TextStyle(
                     color = selectedColor,
                     fontSize = 20.sp,
                     fontWeight = FontWeight.ExtraBold,

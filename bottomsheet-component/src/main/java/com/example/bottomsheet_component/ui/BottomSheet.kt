@@ -1,5 +1,6 @@
 package com.example.bottomsheet_component.ui
 
+import android.util.Log
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -29,6 +30,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.launch
+import kotlin.math.abs
 
 @Composable
 fun BoxScope.BottomSheet(
@@ -58,37 +60,110 @@ fun BoxScope.BottomSheet(
                 detectVerticalDragGestures(
                     onDragEnd = {
                         bottomSheetState.isDragging = false
-                        if (
-                            with(bottomSheetState) {
-                                // 1.5f
-                                screenPercentage.value > (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.EXPANDED) / 2
-                            }) {
-                            coroutineScope.launch {
-                                bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
-                                bottomSheetState.stage = BottomSheetStage.EXPANDED
-                                onExpanded()
-                            }
-                        } else if (
-                            with(bottomSheetState) {
-                                // 0.53f
-                                screenPercentage.value < (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.COLLAPSED) / 2
-                            })
-                            coroutineScope.launch {
-                                bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
-                                bottomSheetState.stage = BottomSheetStage.COLLAPSED
-                                onCollapsed()
-                            }
-                        else {
-                            coroutineScope.launch {
-                                bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
-                                bottomSheetState.stage = BottomSheetStage.DEFAULT
-                                onDefault()
+                        Log.d(
+                            "Drag",
+                            "Animation Running: ${bottomSheetState.screenPercentage.isRunning}"
+                        )
+                        if (!bottomSheetState.screenPercentage.isRunning) {
+                            if (
+                                with(bottomSheetState) {
+                                    // 1.5f
+                                    screenPercentage.value > (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.EXPANDED) / 2
+                                }) {
+                                coroutineScope.launch {
+                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                                    bottomSheetState.stage = BottomSheetStage.EXPANDED
+                                    onExpanded()
+                                }
+                            } else if (
+                                with(bottomSheetState) {
+                                    // 0.53f
+                                    screenPercentage.value < (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.COLLAPSED) / 2
+                                })
+                                coroutineScope.launch {
+                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                                    bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                                    onCollapsed()
+                                }
+                            else {
+                                coroutineScope.launch {
+                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                                    bottomSheetState.stage = BottomSheetStage.DEFAULT
+                                    onDefault()
+                                }
                             }
                         }
                     }
-                ) { _, dragAmount ->
+                ) { change, dragAmount ->
+
                     bottomSheetState.isDragging = true
-                    if (bottomSheetState.screenPercentage.value - (dragAmount / height) < bottomSheetState.bottomSheetStagePercentage.COLLAPSED) {
+
+                    /*
+                    Start of Swipe
+                    ----------------------------------------------------------------------------------------------------
+                    Getting the speed of the drag if drag positive it means a swipe down, if negative a swipe up.
+                     Swipe down goes from small + to large +, Swipe down goes from small+- to large -:
+                     Calculate distance between swipes to determine if long or short swipe (usually 50 long 100 short)
+                     Does not work that simple:
+                     - If goes from low to high, means swipe down
+                     - If goes from height to low means swipe up.
+                     */
+
+                    // Swipe Down = curr > prev
+                    if (abs(change.position.y - change.previousPosition.y) > 150 && change.position.y > change.previousPosition.y) {
+                        if (abs(change.position.y - change.previousPosition.y) > 200) {
+                            if (bottomSheetState.stage != BottomSheetStage.COLLAPSED) {
+                                coroutineScope.launch {
+                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                                    bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                                    onCollapsed()
+                                }
+                            }
+                        } else {
+                            if (bottomSheetState.stage == BottomSheetStage.EXPANDED) {
+                                coroutineScope.launch {
+                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                                    bottomSheetState.stage = BottomSheetStage.DEFAULT
+                                    onDefault()
+                                }
+                            } else if (bottomSheetState.stage == BottomSheetStage.DEFAULT) {
+                                coroutineScope.launch {
+                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                                    bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                                    onCollapsed()
+                                }
+                                Log.d("Drag", "Collapsed Set")
+                            }
+                        }
+                    }
+
+                    // Swipe Up = prev > curr
+                    else if (abs(change.position.y - change.previousPosition.y) > 150 && change.previousPosition.y > change.position.y) {
+                        if (abs(change.position.y - change.previousPosition.y) > 200) {
+                            if (bottomSheetState.stage != BottomSheetStage.EXPANDED) {
+                                coroutineScope.launch {
+                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                                    bottomSheetState.stage = BottomSheetStage.EXPANDED
+                                    onExpanded()
+                                }
+                            }
+                        } else {
+                            if (bottomSheetState.stage == BottomSheetStage.DEFAULT) {
+                                coroutineScope.launch {
+                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                                    bottomSheetState.stage = BottomSheetStage.EXPANDED
+                                    onExpanded()
+                                }
+                            } else if (bottomSheetState.stage == BottomSheetStage.COLLAPSED) {
+                                coroutineScope.launch {
+                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                                    bottomSheetState.stage = BottomSheetStage.DEFAULT
+                                    onDefault()
+                                }
+                            }
+                        }
+                    }
+                    else if (bottomSheetState.screenPercentage.value - (dragAmount / height) < bottomSheetState.bottomSheetStagePercentage.COLLAPSED) {
                         coroutineScope.launch {
                             bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
                         }
@@ -110,7 +185,10 @@ fun BoxScope.BottomSheet(
                         size.width / 2 - lineSize.toPx() / 2,
                         lineDistanceFromTop.toPx()
                     ),
-                    end = Offset(size.width / 2 + lineSize.toPx() / 2, lineDistanceFromTop.toPx()),
+                    end = Offset(
+                        size.width / 2 + lineSize.toPx() / 2,
+                        lineDistanceFromTop.toPx()
+                    ),
                     strokeWidth = lineWidth
                 )
             }
@@ -133,7 +211,11 @@ fun rememberBottomSheetState(
     }
 }
 
-data class BottomSheetStagePercentage(val DEFAULT: Float, val EXPANDED: Float, val COLLAPSED: Float)
+data class BottomSheetStagePercentage(
+    val DEFAULT: Float,
+    val EXPANDED: Float,
+    val COLLAPSED: Float
+)
 
 enum class BottomSheetStage {
     DEFAULT,
