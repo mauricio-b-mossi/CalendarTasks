@@ -98,6 +98,23 @@ fun BoxScope.BottomSheet(
 
                     bottomSheetState.isDragging = true
 
+                    if (bottomSheetState.screenPercentage.value - (dragAmount / height) < bottomSheetState.bottomSheetStagePercentage.COLLAPSED) {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                        }
+                    } else if (bottomSheetState.screenPercentage.value - (dragAmount / height) > bottomSheetState.bottomSheetStagePercentage.EXPANDED) {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                        }
+                    } else {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.snapTo(bottomSheetState.screenPercentage.value - dragAmount / height)
+                        }
+                    }
+                }
+            }
+            .pointerInput(true) {
+                detectVerticalDragGestures { change, _ ->
                     /*
                     Start of Swipe
                     ----------------------------------------------------------------------------------------------------
@@ -110,8 +127,8 @@ fun BoxScope.BottomSheet(
                      */
 
                     // Swipe Down = curr > prev
-                    if (abs(change.position.y - change.previousPosition.y) > 150 && change.position.y > change.previousPosition.y) {
-                        if (abs(change.position.y - change.previousPosition.y) > 200) {
+                    if (abs(change.position.y - change.previousPosition.y) > 40 && change.position.y > change.previousPosition.y) {
+                        if (abs(change.position.y - change.previousPosition.y) > 100) {
                             if (bottomSheetState.stage != BottomSheetStage.COLLAPSED) {
                                 coroutineScope.launch {
                                     bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
@@ -132,14 +149,13 @@ fun BoxScope.BottomSheet(
                                     bottomSheetState.stage = BottomSheetStage.COLLAPSED
                                     onCollapsed()
                                 }
-                                Log.d("Drag", "Collapsed Set")
                             }
                         }
                     }
 
                     // Swipe Up = prev > curr
-                    else if (abs(change.position.y - change.previousPosition.y) > 150 && change.previousPosition.y > change.position.y) {
-                        if (abs(change.position.y - change.previousPosition.y) > 200) {
+                    else if (abs(change.position.y - change.previousPosition.y) > 40 && change.previousPosition.y > change.position.y) {
+                        if (abs(change.position.y - change.previousPosition.y) > 100) {
                             if (bottomSheetState.stage != BottomSheetStage.EXPANDED) {
                                 coroutineScope.launch {
                                     bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
@@ -161,19 +177,6 @@ fun BoxScope.BottomSheet(
                                     onDefault()
                                 }
                             }
-                        }
-                    }
-                    else if (bottomSheetState.screenPercentage.value - (dragAmount / height) < bottomSheetState.bottomSheetStagePercentage.COLLAPSED) {
-                        coroutineScope.launch {
-                            bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
-                        }
-                    } else if (bottomSheetState.screenPercentage.value - (dragAmount / height) > bottomSheetState.bottomSheetStagePercentage.EXPANDED) {
-                        coroutineScope.launch {
-                            bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
-                        }
-                    } else {
-                        coroutineScope.launch {
-                            bottomSheetState.screenPercentage.snapTo(bottomSheetState.screenPercentage.value - dragAmount / height)
                         }
                     }
                 }
