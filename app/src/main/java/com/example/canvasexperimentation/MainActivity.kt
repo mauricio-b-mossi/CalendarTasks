@@ -23,6 +23,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
@@ -75,9 +76,17 @@ class MainActivity : ComponentActivity() {
 
             val systemUiController = rememberSystemUiController()
 
+            val isExpandedAndIsDragging by remember {
+                derivedStateOf {
+                    with(bottomSheetState){
+                        stage == BottomSheetStage.EXPANDED && !isDragging && screenPercentage.value > (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.EXPANDED) / 2
+                    }
+                }
+            }
+
 
             LaunchedEffect(bottomSheetState.stage, bottomSheetState.isDragging) {
-                if (bottomSheetState.stage == BottomSheetStage.EXPANDED && !bottomSheetState.isDragging) {
+                if (isExpandedAndIsDragging) {
                     systemUiController.setStatusBarColor(Color.White)
                 } else {
                     systemUiController.setStatusBarColor(calendarBackgroundColor)
@@ -88,7 +97,9 @@ class MainActivity : ComponentActivity() {
             Box(
                 Modifier
                     .fillMaxSize()
-                    .background(calendarBackgroundColor),
+                    .drawBehind {
+                        drawRect(if (isExpandedAndIsDragging) Color.White else calendarBackgroundColor)
+                    }
             ) {
                 CalendarRow(
                     dateRange = calendarRange,
