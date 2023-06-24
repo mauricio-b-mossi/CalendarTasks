@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
 
@@ -56,131 +57,12 @@ fun BoxScope.BottomSheet(
             .fillMaxHeight(bottomSheetState.screenPercentage.value)
             .clip(RoundedCornerShape(topEnd = 25.dp, topStart = 25.dp))
             .background(Color.White)
-            .pointerInput(true) {
-                detectVerticalDragGestures(
-                    onDragEnd = {
-                        bottomSheetState.isDragging = false
-                        Log.d(
-                            "Drag",
-                            "Animation Running: ${bottomSheetState.screenPercentage.isRunning}"
-                        )
-                        if (!bottomSheetState.screenPercentage.isRunning) {
-                            if (
-                                with(bottomSheetState) {
-                                    // 1.5f
-                                    screenPercentage.value > (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.EXPANDED) / 2
-                                }) {
-                                coroutineScope.launch {
-                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
-                                    bottomSheetState.stage = BottomSheetStage.EXPANDED
-                                    onExpanded()
-                                }
-                            } else if (
-                                with(bottomSheetState) {
-                                    // 0.53f
-                                    screenPercentage.value < (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.COLLAPSED) / 2
-                                })
-                                coroutineScope.launch {
-                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
-                                    bottomSheetState.stage = BottomSheetStage.COLLAPSED
-                                    onCollapsed()
-                                }
-                            else {
-                                coroutineScope.launch {
-                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
-                                    bottomSheetState.stage = BottomSheetStage.DEFAULT
-                                    onDefault()
-                                }
-                            }
-                        }
-                    }
-                ) { change, dragAmount ->
-
-                    bottomSheetState.isDragging = true
-
-                    if (bottomSheetState.screenPercentage.value - (dragAmount / height) < bottomSheetState.bottomSheetStagePercentage.COLLAPSED) {
-                        coroutineScope.launch {
-                            bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
-                        }
-                    } else if (bottomSheetState.screenPercentage.value - (dragAmount / height) > bottomSheetState.bottomSheetStagePercentage.EXPANDED) {
-                        coroutineScope.launch {
-                            bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
-                        }
-                    } else {
-                        coroutineScope.launch {
-                            bottomSheetState.screenPercentage.snapTo(bottomSheetState.screenPercentage.value - dragAmount / height)
-                        }
-                    }
-                }
-            }
-            .pointerInput(true) {
-                detectVerticalDragGestures { change, _ ->
-                    /*
-                    Start of Swipe
-                    ----------------------------------------------------------------------------------------------------
-                    Getting the speed of the drag if drag positive it means a swipe down, if negative a swipe up.
-                     Swipe down goes from small + to large +, Swipe down goes from small+- to large -:
-                     Calculate distance between swipes to determine if long or short swipe (usually 50 long 100 short)
-                     Does not work that simple:
-                     - If goes from low to high, means swipe down
-                     - If goes from height to low means swipe up.
-                     */
-
-                    // Swipe Down = curr > prev
-                    if (abs(change.position.y - change.previousPosition.y) > 40 && change.position.y > change.previousPosition.y) {
-                        if (abs(change.position.y - change.previousPosition.y) > 100) {
-                            if (bottomSheetState.stage != BottomSheetStage.COLLAPSED) {
-                                coroutineScope.launch {
-                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
-                                    bottomSheetState.stage = BottomSheetStage.COLLAPSED
-                                    onCollapsed()
-                                }
-                            }
-                        } else {
-                            if (bottomSheetState.stage == BottomSheetStage.EXPANDED) {
-                                coroutineScope.launch {
-                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
-                                    bottomSheetState.stage = BottomSheetStage.DEFAULT
-                                    onDefault()
-                                }
-                            } else if (bottomSheetState.stage == BottomSheetStage.DEFAULT) {
-                                coroutineScope.launch {
-                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
-                                    bottomSheetState.stage = BottomSheetStage.COLLAPSED
-                                    onCollapsed()
-                                }
-                            }
-                        }
-                    }
-
-                    // Swipe Up = prev > curr
-                    else if (abs(change.position.y - change.previousPosition.y) > 40 && change.previousPosition.y > change.position.y) {
-                        if (abs(change.position.y - change.previousPosition.y) > 100) {
-                            if (bottomSheetState.stage != BottomSheetStage.EXPANDED) {
-                                coroutineScope.launch {
-                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
-                                    bottomSheetState.stage = BottomSheetStage.EXPANDED
-                                    onExpanded()
-                                }
-                            }
-                        } else {
-                            if (bottomSheetState.stage == BottomSheetStage.DEFAULT) {
-                                coroutineScope.launch {
-                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
-                                    bottomSheetState.stage = BottomSheetStage.EXPANDED
-                                    onExpanded()
-                                }
-                            } else if (bottomSheetState.stage == BottomSheetStage.COLLAPSED) {
-                                coroutineScope.launch {
-                                    bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
-                                    bottomSheetState.stage = BottomSheetStage.DEFAULT
-                                    onDefault()
-                                }
-                            }
-                        }
-                    }
-                }
-            }
+            .snapDrag(
+                bottomSheetState,
+                coroutineScope,
+                onDefault = { onDefault() },
+                onCollapsed = { onCollapsed },
+                onExpanded = { onExpanded })
             .drawBehind {
                 drawLine(
                     color = Color.LightGray,
@@ -251,3 +133,146 @@ class BottomSheetState(
 
 }
 
+fun Modifier.smoothDrag(
+    bottomSheetState: BottomSheetState,
+    coroutineScope: CoroutineScope,
+    screenHeight: Float,
+    onDefault: () -> Unit = {},
+    onExpanded: () -> Unit = {},
+    onCollapsed: () -> Unit = {}
+): Modifier {
+    return this.then(pointerInput(true) {
+        detectVerticalDragGestures(
+            onDragEnd = {
+                bottomSheetState.isDragging = false
+                Log.d(
+                    "Drag",
+                    "Animation Running: ${bottomSheetState.screenPercentage.isRunning}"
+                )
+                if (!bottomSheetState.screenPercentage.isRunning) {
+                    if (
+                        with(bottomSheetState) {
+                            // 1.5f
+                            screenPercentage.value > (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.EXPANDED) / 2
+                        }) {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                            bottomSheetState.stage = BottomSheetStage.EXPANDED
+                            onExpanded()
+                        }
+                    } else if (
+                        with(bottomSheetState) {
+                            // 0.53f
+                            screenPercentage.value < (bottomSheetStagePercentage.DEFAULT + bottomSheetStagePercentage.COLLAPSED) / 2
+                        })
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                            bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                            onCollapsed()
+                        }
+                    else {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                            bottomSheetState.stage = BottomSheetStage.DEFAULT
+                            onDefault()
+                        }
+                    }
+                }
+            }
+        ) { change, dragAmount ->
+
+            bottomSheetState.isDragging = true
+
+            if (bottomSheetState.screenPercentage.value - (dragAmount / screenHeight) < bottomSheetState.bottomSheetStagePercentage.COLLAPSED) {
+                coroutineScope.launch {
+                    bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                }
+            } else if (bottomSheetState.screenPercentage.value - (dragAmount / screenHeight) > bottomSheetState.bottomSheetStagePercentage.EXPANDED) {
+                coroutineScope.launch {
+                    bottomSheetState.screenPercentage.snapTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                }
+            } else {
+                coroutineScope.launch {
+                    bottomSheetState.screenPercentage.snapTo(bottomSheetState.screenPercentage.value - dragAmount / screenHeight)
+                }
+            }
+        }
+    })
+}
+
+fun Modifier.snapDrag(
+    bottomSheetState: BottomSheetState,
+    coroutineScope: CoroutineScope,
+    onDefault: () -> Unit = {},
+    onExpanded: () -> Unit = {},
+    onCollapsed: () -> Unit = {}
+): Modifier {
+    return this.then(pointerInput(true) {
+        detectVerticalDragGestures { change, _ ->
+            /*
+            Start of Swipe
+            ----------------------------------------------------------------------------------------------------
+            Getting the speed of the drag if drag positive it means a swipe down, if negative a swipe up.
+             Swipe down goes from small + to large +, Swipe down goes from small+- to large -:
+             Calculate distance between swipes to determine if long or short swipe (usually 50 long 100 short)
+             Does not work that simple:
+             - If goes from low to high, means swipe down
+             - If goes from height to low means swipe up.
+             */
+
+            // Swipe Down = curr > prev
+            if (abs(change.position.y - change.previousPosition.y) > 40 && change.position.y > change.previousPosition.y) {
+                if (abs(change.position.y - change.previousPosition.y) > 100) {
+                    if (bottomSheetState.stage != BottomSheetStage.COLLAPSED) {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                            bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                            onCollapsed()
+                        }
+                    }
+                } else {
+                    if (bottomSheetState.stage == BottomSheetStage.EXPANDED) {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                            bottomSheetState.stage = BottomSheetStage.DEFAULT
+                            onDefault()
+                        }
+                    } else if (bottomSheetState.stage == BottomSheetStage.DEFAULT) {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.COLLAPSED)
+                            bottomSheetState.stage = BottomSheetStage.COLLAPSED
+                            onCollapsed()
+                        }
+                    }
+                }
+            }
+
+            // Swipe Up = prev > curr
+            else if (abs(change.position.y - change.previousPosition.y) > 40 && change.previousPosition.y > change.position.y) {
+                if (abs(change.position.y - change.previousPosition.y) > 100) {
+                    if (bottomSheetState.stage != BottomSheetStage.EXPANDED) {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                            bottomSheetState.stage = BottomSheetStage.EXPANDED
+                            onExpanded()
+                        }
+                    }
+                } else {
+                    if (bottomSheetState.stage == BottomSheetStage.DEFAULT) {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.EXPANDED)
+                            bottomSheetState.stage = BottomSheetStage.EXPANDED
+                            onExpanded()
+                        }
+                    } else if (bottomSheetState.stage == BottomSheetStage.COLLAPSED) {
+                        coroutineScope.launch {
+                            bottomSheetState.screenPercentage.animateTo(bottomSheetState.bottomSheetStagePercentage.DEFAULT)
+                            bottomSheetState.stage = BottomSheetStage.DEFAULT
+                            onDefault()
+                        }
+                    }
+                }
+            }
+        }
+    })
+}
