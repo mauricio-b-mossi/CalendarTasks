@@ -1,7 +1,6 @@
 package com.example.bottomsheet_component.ui
 
 import android.util.Log
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -9,18 +8,10 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowLeft
-import androidx.compose.material.icons.filled.KeyboardArrowUp
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
@@ -36,9 +27,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
@@ -52,87 +42,27 @@ fun BoxScope.BottomSheet(
     onDefault: () -> Unit = {},
     onCollapsed: () -> Unit = {},
     onExpanded: () -> Unit = {},
-    floatingActionButton: @Composable () -> Unit,
-    showFloatingActionButton : Boolean = false,
     lineSize: Dp = 50.dp,
     lineDistanceFromTop: Dp = 13.dp,
     lineWidth: Float = 10f,
     content: @Composable ColumnScope.() -> Unit,
 ) {
-    val height = with(LocalDensity.current) {
-        LocalConfiguration.current.screenHeightDp.dp.toPx()
-    }
-
-    val coroutineScope = rememberCoroutineScope()
-
-    Box(Modifier.align(Alignment.BottomCenter)) {
-        Box(modifier = Modifier.align(Alignment.TopCenter).offset(x = 0.dp, y = -(50).dp)) {
-            if(showFloatingActionButton) {
-                floatingActionButton()
-            }
-        }
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .fillMaxHeight(bottomSheetState.screenPercentage.value)
-                .clip(RoundedCornerShape(topEnd = 25.dp, topStart = 25.dp))
-                .background(Color.White)
-                .smoothSnapDrag(
-                    bottomSheetState,
-                    coroutineScope,
-                    screenHeight = height,
-                    onDefault = { onDefault() },
-                    onCollapsed = { onCollapsed() },
-                    onExpanded = { onExpanded() })
-                .drawBehind {
-                    drawLine(
-                        color = Color.LightGray,
-                        start = Offset(
-                            size.width / 2 - lineSize.toPx() / 2,
-                            lineDistanceFromTop.toPx()
-                        ),
-                        end = Offset(
-                            size.width / 2 + lineSize.toPx() / 2,
-                            lineDistanceFromTop.toPx()
-                        ),
-                        strokeWidth = lineWidth
-                    )
-                }
-                .padding(25.dp)
-        ) {
-            content()
-        }
-    }
-}
-
-@Composable
-fun BoxScope.BottomSheet(
-    bottomSheetState: BottomSheetState,
-    onDefault: () -> Unit = {},
-    onCollapsed: () -> Unit = {},
-    onExpanded: () -> Unit = {},
-    lineSize: Dp = 50.dp,
-    lineDistanceFromTop: Dp = 13.dp,
-    lineWidth: Float = 10f,
-    content: @Composable ColumnScope.() -> Unit,
-) {
-    val height = with(LocalDensity.current) {
-        LocalConfiguration.current.screenHeightDp.dp.toPx()
-    }
-
     val coroutineScope = rememberCoroutineScope()
 
     Column(
         Modifier
+            .graphicsLayer {
+                translationY =
+                    bottomSheetState.screenHeight * (1f - bottomSheetState.screenPercentage.value)
+            }
             .align(Alignment.BottomCenter)
-            .fillMaxWidth()
-            .fillMaxHeight(bottomSheetState.screenPercentage.value)
+            .fillMaxSize()
             .clip(RoundedCornerShape(topEnd = 25.dp, topStart = 25.dp))
             .background(Color.White)
             .smoothSnapDrag(
                 bottomSheetState,
                 coroutineScope,
-                screenHeight = height,
+                screenHeight = bottomSheetState.screenHeight,
                 onDefault = { onDefault() },
                 onCollapsed = { onCollapsed() },
                 onExpanded = { onExpanded() })
@@ -157,13 +87,82 @@ fun BoxScope.BottomSheet(
 }
 
 @Composable
+fun BoxScope.BottomSheet(
+    bottomSheetState: BottomSheetState,
+    onDefault: () -> Unit = {},
+    onCollapsed: () -> Unit = {},
+    onExpanded: () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit,
+    showFloatingActionButton: Boolean = false,
+    lineSize: Dp = 50.dp,
+    lineDistanceFromTop: Dp = 13.dp,
+    lineWidth: Float = 10f,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+
+    val coroutineScope = rememberCoroutineScope()
+
+    Box(
+        Modifier
+            .align(Alignment.BottomCenter)
+            .graphicsLayer {
+                translationY =
+                    bottomSheetState.screenHeight * (1f - bottomSheetState.screenPercentage.value)
+            }
+    ) {
+        Box(
+            modifier = Modifier
+                .align(Alignment.TopCenter)
+                .offset(x = 0.dp, y = -(50).dp)
+        ) {
+            if (showFloatingActionButton) {
+                floatingActionButton()
+            }
+        }
+        Column(
+            Modifier
+                .fillMaxSize()
+                .clip(RoundedCornerShape(topEnd = 25.dp, topStart = 25.dp))
+                .background(Color.White)
+                .smoothSnapDrag(
+                    bottomSheetState,
+                    coroutineScope,
+                    screenHeight = bottomSheetState.screenHeight,
+                    onDefault = { onDefault() },
+                    onCollapsed = { onCollapsed() },
+                    onExpanded = { onExpanded() })
+                .drawBehind {
+                    drawLine(
+                        color = Color.LightGray,
+                        start = Offset(
+                            size.width / 2 - lineSize.toPx() / 2,
+                            lineDistanceFromTop.toPx()
+                        ),
+                        end = Offset(
+                            size.width / 2 + lineSize.toPx() / 2,
+                            lineDistanceFromTop.toPx()
+                        ),
+                        strokeWidth = lineWidth
+                    )
+                }
+                .padding(25.dp)
+        ) {
+            content()
+        }
+    }
+}
+
+
+@Composable
 fun rememberBottomSheetState(
+    screenHeight: Float,
     startStage: BottomSheetStage,
     bottomSheetStagePercentage: BottomSheetStagePercentage
 ): BottomSheetState {
     return remember {
         BottomSheetState(
             startStage = startStage,
+            screenHeight = screenHeight,
             bottomSheetStagePercentage = bottomSheetStagePercentage
         )
     }
@@ -184,6 +183,7 @@ enum class BottomSheetStage {
 @Stable
 class BottomSheetState(
     startStage: BottomSheetStage,
+    val screenHeight: Float,
     val bottomSheetStagePercentage: BottomSheetStagePercentage
 ) {
     var isDragging by mutableStateOf(false)
@@ -243,15 +243,11 @@ internal fun Modifier.smoothSnapDrag(
         pointerInput(true) {
             detectVerticalDragGestures(
                 onDragEnd = {
-                    Log.d("Cache", "${abs(cache.current - cache.previous)}")
 
                     bottomSheetState.isDragging = false
 
                     if (abs(cache.current - cache.previous) > lowerBoundary) {
-                        Log.d(
-                            "Drag",
-                            "Cache IS larger than 40 ${abs(cache.current - cache.previous)}"
-                        )
+
                         if (cache.current > cache.previous) {
                             if (abs(cache.current - cache.previous) > upperBoundary) {
                                 if (bottomSheetState.stage != BottomSheetStage.COLLAPSED) {
@@ -305,10 +301,6 @@ internal fun Modifier.smoothSnapDrag(
                             }
                         }
                     } else {
-                        Log.d(
-                            "Drag",
-                            "Cache is NOT larger than 40 ${abs(cache.current - cache.previous)}"
-                        )
                         if (
                             with(bottomSheetState) {
                                 // 1.5f

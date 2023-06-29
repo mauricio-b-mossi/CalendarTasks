@@ -1,6 +1,7 @@
 package com.example.canvasexperimentation
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.animation.AnimatedContent
@@ -17,6 +18,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -28,6 +30,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
@@ -47,6 +52,7 @@ import androidx.compose.ui.unit.sp
 import com.example.bottomsheet_component.ui.BottomSheet
 import com.example.bottomsheet_component.ui.BottomSheetStage
 import com.example.bottomsheet_component.ui.BottomSheetStagePercentage
+import com.example.bottomsheet_component.ui.BottomSheetState
 import com.example.bottomsheet_component.ui.rememberBottomSheetState
 import com.example.canvasexperimentation.ui.theme.activeColor
 import com.example.canvasexperimentation.ui.theme.calendarBackgroundColor
@@ -64,6 +70,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
+            val screenHeight = with(LocalDensity.current) {
+                LocalConfiguration.current.screenHeightDp.dp.toPx()
+            }
 
             var date by remember {
                 mutableStateOf(LocalDate.now())
@@ -71,6 +80,7 @@ class MainActivity : ComponentActivity() {
 
             val bottomSheetState = rememberBottomSheetState(
                 startStage = BottomSheetStage.DEFAULT,
+                screenHeight = screenHeight,
                 bottomSheetStagePercentage = BottomSheetStagePercentage(
                     DEFAULT = 0.5F,
                     EXPANDED = 1F,
@@ -154,6 +164,7 @@ class MainActivity : ComponentActivity() {
                 ) {
                     TodoBottomSheet(
                         date = date,
+                        bottomSheetState = bottomSheetState,
                         onClickSelectedDate = {
                             coroutineScope.launch {
                                 calendarState.animateToSelectedDate(it)
@@ -187,7 +198,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
                         },
-                        showBottomFloatingActionButton = bottomSheetState.isStaticAtDefault && !calendarState.inStartingIndex,
+                        showBottomFloatingActionButton = (bottomSheetState.isStaticAtDefault || bottomSheetState.isStaticAtExpanded) && !calendarState.inStartingIndex
                     )
                 }
             }
@@ -200,12 +211,15 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun TodoBottomSheet(
     date: LocalDate,
+    bottomSheetState: BottomSheetState,
     onClickSelectedDate: (LocalDate) -> Unit = {},
     floatingActionButton: @Composable () -> Unit,
-    showBottomFloatingActionButton: Boolean,
+    showBottomFloatingActionButton: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Box(modifier.fillMaxSize()) {
+
+        val density = LocalDensity.current
 
         Column {
             if (date == LocalDate.now()) {
@@ -235,12 +249,17 @@ fun TodoBottomSheet(
             Spacer(Modifier.height(16.dp))
         }
 
-        Box(modifier = Modifier.align(Alignment.BottomStart)) {
-            AnimatedVisibility(
-                showBottomFloatingActionButton,
-                enter = slideInHorizontally(),
-                exit = slideOutHorizontally(animationSpec = tween(200)) + scaleOut(
-                    animationSpec = tween(200)
+        AnimatedVisibility(
+            showBottomFloatingActionButton,
+            enter = slideInHorizontally(),
+            exit = slideOutHorizontally(animationSpec = tween(200))
+        )
+        {
+            Box(
+                modifier = Modifier.offset(
+                    x = 0.dp, y = with(density) {
+                        (bottomSheetState.screenHeight * (bottomSheetState.screenPercentage.value)).toDp() - 100.dp
+                    }
                 )
             ) {
                 floatingActionButton()
