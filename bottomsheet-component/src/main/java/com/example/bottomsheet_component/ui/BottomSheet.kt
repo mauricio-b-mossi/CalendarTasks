@@ -1,18 +1,29 @@
 package com.example.bottomsheet_component.ui
 
 import android.util.Log
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,6 +44,66 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.abs
+
+
+@Composable
+fun BoxScope.BottomSheet(
+    bottomSheetState: BottomSheetState,
+    onDefault: () -> Unit = {},
+    onCollapsed: () -> Unit = {},
+    onExpanded: () -> Unit = {},
+    floatingActionButton: @Composable () -> Unit,
+    showFloatingActionButton : Boolean = false,
+    lineSize: Dp = 50.dp,
+    lineDistanceFromTop: Dp = 13.dp,
+    lineWidth: Float = 10f,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    val height = with(LocalDensity.current) {
+        LocalConfiguration.current.screenHeightDp.dp.toPx()
+    }
+
+    val coroutineScope = rememberCoroutineScope()
+
+    Box(Modifier.align(Alignment.BottomCenter)) {
+        Box(modifier = Modifier.align(Alignment.TopCenter).offset(x = 0.dp, y = -(50).dp)) {
+            if(showFloatingActionButton) {
+                floatingActionButton()
+            }
+        }
+        Column(
+            Modifier
+                .fillMaxWidth()
+                .fillMaxHeight(bottomSheetState.screenPercentage.value)
+                .clip(RoundedCornerShape(topEnd = 25.dp, topStart = 25.dp))
+                .background(Color.White)
+                .smoothSnapDrag(
+                    bottomSheetState,
+                    coroutineScope,
+                    screenHeight = height,
+                    onDefault = { onDefault() },
+                    onCollapsed = { onCollapsed() },
+                    onExpanded = { onExpanded() })
+                .drawBehind {
+                    drawLine(
+                        color = Color.LightGray,
+                        start = Offset(
+                            size.width / 2 - lineSize.toPx() / 2,
+                            lineDistanceFromTop.toPx()
+                        ),
+                        end = Offset(
+                            size.width / 2 + lineSize.toPx() / 2,
+                            lineDistanceFromTop.toPx()
+                        ),
+                        strokeWidth = lineWidth
+                    )
+                }
+                .padding(25.dp)
+        ) {
+            content()
+        }
+    }
+}
 
 @Composable
 fun BoxScope.BottomSheet(
@@ -132,6 +203,24 @@ class BottomSheetState(
             }
         }
     )
+    val isStaticAtDefault by derivedStateOf {
+        isStaticAtStage(BottomSheetStage.DEFAULT)
+    }
+    val isStaticAtExpanded by derivedStateOf {
+        isStaticAtStage(BottomSheetStage.EXPANDED)
+    }
+    val isStaticAtCollapsed by derivedStateOf {
+        isStaticAtStage(BottomSheetStage.COLLAPSED)
+    }
+
+    fun isStaticAtStage(stage: BottomSheetStage): Boolean {
+        val percentageValue: Float = when (stage) {
+            BottomSheetStage.DEFAULT -> bottomSheetStagePercentage.DEFAULT
+            BottomSheetStage.EXPANDED -> bottomSheetStagePercentage.EXPANDED
+            BottomSheetStage.COLLAPSED -> bottomSheetStagePercentage.COLLAPSED
+        }
+        return screenPercentage.value == percentageValue && !isDragging && this.stage == stage
+    }
 
 }
 

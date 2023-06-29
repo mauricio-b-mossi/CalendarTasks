@@ -6,20 +6,22 @@ import androidx.compose.foundation.gestures.snapping.rememberSnapFlingBehavior
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.ExperimentalTextApi
 import androidx.compose.ui.text.TextMeasurer
@@ -28,49 +30,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
-
-@OptIn(ExperimentalTextApi::class, ExperimentalFoundationApi::class)
-@Composable
-fun CalendarRow(
-    calendarState: CalendarState,
-    date: LocalDate,
-    onDateChange: (LocalDate) -> Unit,
-    textMeasurer: TextMeasurer = rememberTextMeasurer(),
-    activeColor: Color,
-    inactiveColor: Color,
-    selectedColor: Color,
-    itemPadding: Dp = 0.dp,
-    modifier: Modifier = Modifier
-) {
-    BoxWithConstraints(modifier) {
-        val maxWidth = maxWidth
-        LazyRow(
-            state = calendarState.lazyListState,
-            flingBehavior = rememberSnapFlingBehavior(lazyListState = calendarState.lazyListState)
-        ) {
-            items(calendarState.dateRange) { localDate ->
-                Column(modifier = Modifier.padding(horizontal = itemPadding)) {
-                    Month(
-                        date = date,
-                        onDateSelect = { localDate ->
-                            onDateChange(localDate)
-                        },
-                        activeColor = activeColor,
-                        inactiveColor = inactiveColor,
-                        selectedColor = selectedColor,
-                        month = localDate.month,
-                        year = localDate.year,
-                        textMeasurer = textMeasurer,
-                        modifier = Modifier
-                            .width(maxWidth - itemPadding * 2)
-                            .height(400.dp)
-                    )
-                }
-            }
-        }
-    }
-
-}
 
 @OptIn(ExperimentalTextApi::class, ExperimentalFoundationApi::class)
 @Composable
@@ -93,8 +52,11 @@ fun Calendar(
                 state = calendarState.lazyListState,
                 flingBehavior = rememberSnapFlingBehavior(lazyListState = calendarState.lazyListState)
             ) {
-                items(calendarState.dateRange) { localDate ->
-                    Column(modifier = Modifier.padding(horizontal = itemPadding)) {
+                items(items = calendarState.dateRange, key = { it.toString() }) { localDate ->
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = itemPadding)
+                    ) {
                         Month(
                             date = date,
                             onDateSelect = { localDate ->
@@ -117,8 +79,13 @@ fun Calendar(
                 state = calendarState.lazyListState,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
-                items(calendarState.dateRange) { localDate ->
-                    Column(modifier = Modifier.padding(horizontal = itemPadding)) {
+                items(
+                    items = calendarState.dateRange,
+                    key = { it.toString() }) { localDate ->
+                    Column(
+                        modifier = Modifier
+                            .padding(horizontal = itemPadding)
+                    ) {
                         Month(
                             date = date,
                             onDateSelect = { localDate ->
@@ -138,13 +105,12 @@ fun Calendar(
             }
         }
     }
-
 }
+
 
 enum class CalendarOrientation {
     ROW,
     COLUMN,
-    GRID,
 }
 
 @Composable
@@ -168,6 +134,40 @@ class CalendarState(
     val startingIndex = getMonthIndex(date, dateRange.first())
     val lazyListState = LazyListState(startingIndex)
     var calendarOrientation by mutableStateOf(initialOrientation)
+    val inStartingIndex by derivedStateOf {
+        lazyListState.firstVisibleItemIndex == startingIndex
+    }
+    val beforeStartingIndex by derivedStateOf {
+        lazyListState.firstVisibleItemIndex < startingIndex
+    }
+
+    suspend fun animateToBound(bound: Int) {
+        with(lazyListState) {
+            if (firstVisibleItemScrollOffset > bound) {
+                animateScrollToItem(firstVisibleItemIndex + 1)
+            } else {
+                animateScrollToItem(firstVisibleItemIndex)
+            }
+        }
+    }
+
+    suspend fun animateToSelectedDate(selectedDate: LocalDate) {
+        lazyListState.animateScrollToItem(getMonthIndex(selectedDate))
+    }
+
+    private fun getMonthIndex(currentDate: LocalDate = LocalDate.now()): Int {
+        return if (currentDate.month.value >= dateRange.first().month.value && currentDate.year >= dateRange.first().year) {
+            (currentDate.month.value - dateRange.first().month.value) + (currentDate.year - dateRange.first().year) * 12
+        } else if (currentDate.month.value < dateRange.first().month.value && currentDate.year >= dateRange.first().year) {
+            (currentDate.year - dateRange.first().year) * 12 - (dateRange.first().month.value - currentDate.month.value)
+        } else if (currentDate.month.value < dateRange.first().month.value && currentDate.year < dateRange.first().year) {
+            (dateRange.first().year - currentDate.year) * 12 - (currentDate.month.value - dateRange.first().month.value)
+        } else {
+            (dateRange.first().month.value - currentDate.month.value) + (dateRange.first().year - currentDate.year) * 12
+        }
+    }
+
+
 }
 
 
