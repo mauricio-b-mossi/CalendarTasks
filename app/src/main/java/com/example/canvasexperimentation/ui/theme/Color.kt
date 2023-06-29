@@ -11,6 +11,7 @@ val PurpleGrey40 = Color(0xFF625b71)
 val Pink40 = Color(0xFF7D5260)
 
 val primaryColor = Color(0xFFF27071)
+val secondaryColor = Color(0xFFF2E26E)
 val calendarBackgroundColor = Color(0xFF6CBBDB)
 val activeColor = Color(0xFFf0f2f8)
 val inactiveColor = Color(0XFFC7CED5)

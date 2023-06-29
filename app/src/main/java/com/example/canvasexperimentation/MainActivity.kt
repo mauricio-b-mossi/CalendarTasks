@@ -7,15 +7,16 @@ import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -37,8 +38,10 @@ import com.example.canvasexperimentation.ui.theme.inactiveColor
 import com.example.canvasexperimentation.ui.theme.selectedColor
 import com.example.date_components.ui.components.Calendar
 import com.example.date_components.ui.components.CalendarOrientation
-import com.example.date_components.ui.components.CalendarRow
+import com.example.date_components.ui.components.CalendarState
 import com.example.date_components.ui.components.rememberCalendarState
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.launch
 import java.time.LocalDate
 
 class MainActivity : ComponentActivity() {
@@ -60,11 +63,12 @@ class MainActivity : ComponentActivity() {
                 mutableStateOf(LocalDate.now())
             }
 
-            // Create rememberCalendar
             val calendarState =
                 rememberCalendarState(date = LocalDate.now(), range = 3, CalendarOrientation.ROW)
 
             val textMeasurer = rememberTextMeasurer()
+
+            val coroutineScope = rememberCoroutineScope()
 
             Box(
                 Modifier
@@ -82,14 +86,26 @@ class MainActivity : ComponentActivity() {
                     inactiveColor = inactiveColor,
                     selectedColor = selectedColor,
                     itemPadding = 35.dp,
-                    //modifier = Modifier.fillMaxHeight(.5f)
                 )
 
                 BottomSheet(
                     bottomSheetState = bottomSheetState,
-                    onDefault = {calendarState.calendarOrientation = CalendarOrientation.ROW},
-                    onExpanded = { Log.d("Event", "OnExpanded") },
-                    onCollapsed = {calendarState.calendarOrientation = CalendarOrientation.COLUMN}
+                    onDefault = {
+                        coroutineScope.launch {
+                            with(calendarState.lazyListState) {
+                                if (firstVisibleItemScrollOffset > 200) {
+                                    animateScrollToItem(firstVisibleItemIndex + 1)
+                                } else {
+                                    animateScrollToItem(firstVisibleItemIndex)
+                                }
+                            }
+                            calendarState.calendarOrientation = CalendarOrientation.ROW
+                        }
+                    },
+                    onExpanded = {},
+                    onCollapsed = {
+                        calendarState.calendarOrientation = CalendarOrientation.COLUMN
+                    }
                 ) {
                     TodoBottomSheet(date = date)
                 }
@@ -97,7 +113,6 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
-
 
 @Composable
 fun TodoBottomSheet(
